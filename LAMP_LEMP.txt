@@ -1,0 +1,68 @@
+=================
+how to deploy my laravel project from my windows 10 environment to VPS hosting with Ubuntu 22.04 LTS?
+To deploy your Laravel project from a Windows 10 environment to a VPS running Ubuntu 22.04 LTS, you will need to set up your VPS with a 
+LEMP (Linux, Nginx, MySQL, PHP) stack, transfer your project files using Git or SFTP, configure the server environment, and run the necessary Laravel commands. 
+Prerequisites
+A Windows 10 machine with your working Laravel project (ideally in a Git repository) and an SSH client (like Git Bash, PuTTY, or the built-in Windows Subsystem for Linux).
+A VPS running Ubuntu 22.04 LTS with root or sudo user access via SSH.
+A domain name configured to point to your VPS IP address (optional but recommended for SSL setup). 
+Step 1: Prepare the Ubuntu VPS ... ... etc...
+
+How set Git repositoryand to place my windows 10 Laravel project to my Git repository (e.g., GitHub, GitLab)?
+To set up a Git repository for your Windows 10 Laravel project and place it on a remote host like GitHub or GitLab, you will use the command line (Git Bash is recommended) to initialize Git locally, link it to your remote repository, and push the files. 
+Prerequisites
+Git Installed: Ensure you have Git for Windows installed. The installation includes Git Bash, a command-line interface that is helpful for Git operations on Windows.
+A Git Account: Have an account on a service like GitHub or GitLab.
+Step-by-Step Guide
+1. Create a Remote Repository ... ... etc...
+-
+git init
+git branch -M main
+git add .
+git commit -m "Initial commit of Laravel project LU"
+git remote add origin https://github.com/Gitarijada/lustratio.git
+git remote -v
+git push -u origin main
+
+
+VPS hosting hosting company
+
+Laravel project VPS, you will need a LAMP (Linux, Apache, MySQL, PHP) or LEMP (Linux, Nginx, MySQL, PHP) stack. unmanaged VPS, 
+you will be responsible for installing and configuring all the necessary software yourself. 
+Here are the recommended options and setup choices:
+1. Operating System
+Choose: Ubuntu 22.04 LTS (Long Term Support) or a later LTS version (e.g., 24.04, if available).
+Reasoning: Ubuntu is a popular choice for Laravel deployment, with extensive community support and tutorials available for setting up a production-ready environment. 
+2. Web Server
+Choose: Nginx is generally recommended for Laravel in a production environment due to its superior performance and efficiency in handling concurrent connections.
+Alternative: Apache is also a valid choice and might feel more familiar if you're coming from an XAMPP background, as XAMPP uses Apache by default. 
+It's perfectly capable of running Laravel. 
+3. Database
+Choose: MySQL 8.0+ or MariaDB.
+Reasoning: Both are fully supported by Laravel's Eloquent ORM and are standard in a production environment. 
+You are already using MySQL with XAMPP, so this will be a seamless transition. 
+4. Required Software & Dependencies
+You will need to install the following software packages on your Ubuntu server via the command line (SSH access): 
+PHP: Choose a recent, stable version like PHP 8.2 or later as required by modern Laravel versions.
+PHP Extensions: Install essential extensions: php-fpm (for Nginx), php-mysql, php-mbstring, php-xml, php-bcmath, php-curl, php-zip, and php-gd.
+Composer: This is the PHP dependency manager that Laravel uses. It is essential for managing your project's libraries.
+Git: Necessary for version control and deploying your project code from a repository (e.g., GitHub, GitLab) to your VPS. 
+Summary of the Recommended Stack
+The most performant and modern stack for Laravel is generally considered to be LEMP (Linux, Nginx, MySQL, PHP-FPM). 
+Key Steps After VPS Provisioning
+Once PRQ provides you with your VPS credentials (IP address, username, password/SSH key), you will need to:
+Connect via SSH: Use a terminal (Linux/macOS) or a client like PuTTY (Windows) to log in to your server.
+Initial Server Setup: Update packages and create a new user with sudo privileges (avoid using root for daily tasks).
+Install Software: Manually install and configure Nginx/Apache, MySQL/MariaDB, PHP (with FPM and extensions), and Composer.
+Deploy your Project: Use Git to clone your project repository onto the server.
+Configure Environment: Set up your .env file with the correct database credentials and application key.
+Set Permissions: Configure file permissions for the storage and bootstrap/cache directories to be writable by your web server. 
+This approach gives you full control and is the standard method for deploying Laravel on an unmanaged VPS.
+--------------------
+For a VPS Laravel project, Ubuntu 22.04 LTS is the generally recommended choice for production environments 
+due to its proven stability, extensive community knowledge base, and comprehensive vendor support. 
+Ubuntu 24.04 LTS offers performance improvements and newer software versions (e.g., PHP 8.3) 
+but may involve more initial setup and troubleshooting of potential compatibility issues with third-party tools or specific hardware drivers. 
+-------------------
+To install a LEMP stack (Linux, Nginx, MySQL, PHP) on Ubuntu 22.04, first update your system, then install Nginx, MySQL, and PHP (specifically php8.1-fpm and php-mysql), 
+and finally configure Nginx to process PHP files by creating a server block for your site and testing with a phpinfo() file, ensuring you secure MySQL and set up UFW firewall rules. 

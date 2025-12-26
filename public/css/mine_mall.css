@@ -1,0 +1,194 @@
+/*#app {
+    width: 100%;
+}*/
+
+/*body {
+    max-width: 100%;
+    overflow-x: hidden;
+}*/
+
+.row {  /* Fix Horizontal Scrollbar Overflow */
+    margin-right: 0px;
+    margin-left: 0px;
+  }
+
+.text-center {  /* doesn't work in app.css - for footer */
+    text-align: center !important;
+}
+
+/* fragments from Tailwind.min.css */
+.table-auto{table-layout:auto}
+.table-fixed{table-layout:fixed}
+.text-left{text-align:left}
+/*.text-center{text-align:center}*/
+.text-right{text-align:right}
+.text-justify{text-align:justify}
+.text-transparent{color:transparent}
+.text-current{color:currentColor}
+.text-black{color:#000}
+.text-white{color:#fff}
+.text-gray-100{color:#f7fafc}
+.text-gray-200{color:#edf2f7}
+.text-gray-300{color:#e2e8f0}
+.text-gray-400{color:#cbd5e0}
+.text-gray-500{color:#a0aec0}
+.text-gray-600{color:#718096}
+.text-gray-700{color:#4a5568}
+.text-gray-800{color:#2d3748}
+.text-gray-900{color:#1a202c}
+.text-red-100{color:#fff5f5}
+.text-red-200{color:#fed7d7}
+.text-red-300{color:#feb2b2}
+.text-red-400{color:#fc8181}
+.text-red-500{color:#f56565}
+.text-red-600{color:#e53e3e}
+.text-red-700{color:#c53030}
+.text-red-800{color:#9b2c2c}
+.text-red-900{color:#742a2a}
+
+.w-0{width:0}
+.w-1{width:.25rem}
+.w-2{width:.5rem}
+.w-3{width:.75rem}
+.w-4{width:1rem}
+.w-5{width:1.25rem}
+.w-6{width:1.5rem}
+.w-8{width:2rem}
+.w-10{width:2.5rem}
+.w-12{width:3rem}
+.w-16{width:4rem}
+.w-20{width:5rem}
+.w-24{width:6rem}
+.w-32{width:8rem}
+.w-40{width:10rem}
+.w-48{width:12rem}
+.w-56{width:14rem}
+.w-64{width:16rem}
+.w-auto{width:auto}
+.w-px{width:1px}
+.w-1\/2{width:50%}
+.w-1\/3{width:33.333333%}
+.w-2\/3{width:66.666667%}
+.w-1\/4{width:25%}
+.w-2\/4{width:50%}
+.w-3\/4{width:75%}
+.w-1\/5{width:20%}
+.w-2\/5{width:40%}
+.w-3\/5{width:60%}
+.w-4\/5{width:80%}
+.w-1\/6{width:16.666667%}
+.w-2\/6{width:33.333333%}
+.w-3\/6{width:50%}
+.w-4\/6{width:66.666667%}
+.w-5\/6{width:83.333333%}
+.w-1\/12{width:8.333333%}
+.w-2\/12{width:16.666667%}
+.w-3\/12{width:25%}
+.w-4\/12{width:33.333333%}
+.w-5\/12{width:41.666667%}
+.w-6\/12{width:50%}
+.w-7\/12{width:58.333333%}
+.w-8\/12{width:66.666667%}
+.w-9\/12{width:75%}
+.w-10\/12{width:83.333333%}
+.w-11\/12{width:91.666667%}
+.w-full{width:100%}
+.w-screen{width:100vw}
+
+.list-none{list-style-type:none}
+.list-disc{list-style-type:disc}
+.list-decimal{list-style-type:decimal}
+.m-0{margin:0}
+.m-1{margin:.25rem}
+.m-2{margin:.5rem}
+.m-3{margin:.75rem}
+.m-4{margin:1rem}
+.m-5{margin:1.25rem}
+.m-6{margin:1.5rem}
+.m-8{margin:2rem}
+.m-10{margin:2.5rem}
+.m-12{margin:3rem}
+.m-16{margin:4rem}
+.m-20{margin:5rem}
+.m-24{margin:6rem}
+.m-32{margin:8rem}
+.m-40{margin:10rem}
+.m-48{margin:12rem}
+.m-56{margin:14rem}
+.m-64{margin:16rem}
+.m-auto{margin:auto}
+.m-px{margin:1px}
+.-m-1{margin:-.25rem}
+.-m-2{margin:-.5rem}
+.-m-3{margin:-.75rem}
+.-m-4{margin:-1rem}
+.-m-5{margin:-1.25rem}
+.-m-6{margin:-1.5rem}
+.-m-8{margin:-2rem}
+.-m-10{margin:-2.5rem}
+.-m-12{margin:-3rem}
+.-m-16{margin:-4rem}
+.-m-20{margin:-5rem}
+.-m-24{margin:-6rem}
+.-m-32{margin:-8rem}
+.-m-40{margin:-10rem}
+.-m-48{margin:-12rem}
+.-m-56{margin:-14rem}
+.-m-64{margin:-16rem}
+
+/* nav bar style */
+.dropdown {
+    display: inline-block;
+    position: relative;
+}
+  
+.dropdown:hover .dropdown-content {
+    display: block;
+    z-index:10;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    width: 100%;
+    overflow: auto;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+}
+
+.dropdown-content a {
+    display: block;
+    color: #000000;
+    background-color: #FFFFFF;
+    padding: 5px;
+    text-decoration: none;
+    width: auto !important; /*just to override your inline CSS */
+}
+
+.dropdown-content a:hover {
+    color: #FFFFFF;
+    background-color: #00A4BD;
+}
+/* nav bar style END */
+
+/* *list.blade search style */
+.list_container{
+    display: flex;
+    padding-bottom: 10px;
+    /*background-color:#2E4272;
+    padding: 5px;*/
+}
+.fixed{
+    width: auto;
+    /*background-color:#4F628E;*/
+}
+.flex-item{
+    flex-grow: 1;
+    text-align: right;
+    padding-right: 80px;
+    /*background-color:#7887AB;*/
+}
+
+img:hover {
+    cursor: pointer;
+}
+/* *list.blade search style END */
