@@ -1,0 +1,12 @@
+This command displays the entire file content, where each line represents a user, and fields are separated by colons [1]. 
+bash
+  cat /etc/passwd
+
+Using the getent command (recommended):
+getent is a more robust tool as it checks multiple databases, including /etc/passwd and potentially network-based databases if configured (like LDAP or Active Directory) [1]. 
+bash
+  getent passwd
+
+Group information is stored in the /etc/group file. Using the cat command:
+bash
+  cat /etc/group
