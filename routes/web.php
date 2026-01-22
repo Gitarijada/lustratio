@@ -25,15 +25,23 @@ use App\Mail\EventMail;
 | contains the "web" middleware group. Now create something great!
 |
 */
-
+/*Route::get('/test-mail', function () {
+    Mail::raw('Productions e_mail testing!', function ($message) {
+        $message->to('mojweb@email.cz')
+                ->subject('Productions can see TRY');
+    });
+    return 'Test e_mail sent!';
+});*/
 /*Route::get('/', function () {
     return view('welcomen');
 });*/
 Route::get('/', [SlideshowController::class, 'index']);
 Route::get('/tst', [SlideshowController::class, 'main2x']);
-Route::get('/fame_all2/{sort_by?}', [SlideshowController::class, 'list_all2']);
+Route::get('/fame-all2/{sort_by?}', [SlideshowController::class, 'list_all2']);
+Route::get('/upload-guess', [SlideshowController::class, 'uploadGuessImage']);
+    //->middleware(['auth', 'verified']);
 Route::post('/fame_all/delete', [SlideshowController::class, 'delete'])->name('photos.delete');
-Route::post('guess-ajax', [SlideshowController::class, 'guess_stuff']);    //delete from images_guess tbl
+//Route::post('guess-ajax', [SlideshowController::class, 'guess_stuff']);    //delete from images_guess tbl //currently not i use (del reccord from images_guess)
 Route::get('/make_famous/{id?}',[ValetudinarianController::class, 'make_famous']);  //to add candidate in system, make them famoust option
 Route::post('/store_all',[ValetudinarianController::class, 'store_val_event']);   //store valetudinarians, events and make famous person
 Route::get('/create_ve',[ValetudinarianController::class, 'create_vale_event']);    //create vale and events in one shot-window
@@ -43,7 +51,8 @@ Route::get('/fame/{index?}', [SlideshowController::class, 'index'])->whereNumber
 
 //Route::get('/', [ValetudinarianController::class, 'index']);      //show href="{{ url('/') }}  whatever you like
 
-Route::get('/equ',[ValetudinarianController::class, 'index']);
+Route::get('/equ',[ValetudinarianController::class, 'index'])
+    ->middleware('count.views');
 Route::post('/equ', [ValetudinarianController::class, 'index'])->name('valetudinarians.filter');
 Route::get('/edit/{id}',[ValetudinarianController::class, 'edit']);
 Route::get('/destroy/{id}',[ValetudinarianController::class, 'destroy']);
@@ -95,13 +104,16 @@ Route::post('region-ajax', [ValetudinarianController::class, 'valeventEvents']);
 Route::post('/store-corr',[ValetudinarianController::class, 'store_correction']);
 
 //Route::post('output-ajax', [SlideshowController::class, 'post_ajax_data']);
-Route::post('output-ajax', [SlideshowController::class, 'main2x'])->name('vale-output.filter');
+//Route::post('output-ajax', [SlideshowController::class, 'main2x'])->name('vale-output.filter');
 
 Route::get('/goal', function () {
     return view('goal');
 });
 Route::get('/about', function () {
     return view('about');
+});
+Route::get('/news', function () {
+    return view('news');
 });
 Route::get('/decline', function () {
     return view('decline');
@@ -119,18 +131,12 @@ Route::get('/verify', function () {
 //Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 Route::get('/rote',[RoteController::class, 'index']);
-Route::post('/rote', [RoteController::class, 'index'])->name('rote_valetudinarians.filter');
-Route::get('/rote_unlimit',[RoteController::class, 'unlimit']);
-Route::post('/rote_unlimit', [RoteController::class, 'unlimit'])->name('rote_vale_unlimit.filter');
+Route::post('/rote', [RoteController::class, 'index'])->name('valetudinarians.filter');
 Route::get('/rote_show/{id}',[RoteController::class, 'show']);
 Route::get('/rote_create',[RoteController::class, 'create']);
-
-
-//***************TEMP for test */
-//Route::get('/modaltest2/{xyz?}', [SlideshowController::class, 'modaltest2']);
-Route::get('/fame_all22/{sort_by?}', [SlideshowController::class, 'main2x']);
-//Route::get('/testX/{sort_by?}', [ValetudinarianController::class, 'Create']);
-//**************************** */
+Route::get('/rote_create_ve',[RoteController::class, 'create_vale_event']);    //create vale and events in one shot-window
+Route::post('/store',[RoteController::class, 'store']);
+Route::post('/update/{id}',[RoteController::class, 'update']);
 
 //****************************** without those there is no Login Registrate in menue*/
 //***By simply adding Auth::routes(); to your routes/web.php file, Laravel sets up all the necessary routes, controllers, 
@@ -138,19 +144,6 @@ Route::get('/fame_all22/{sort_by?}', [SlideshowController::class, 'main2x']);
 //Auth::routes();
 Auth::routes(['verify' => true]); //LUST-verification calling Auth.php -> in the end AuthRouteMethods.php
 //****************************** */
-
-//----------------------------------
-//----------------------------------
-//----------------------------------
-//LURoute::get('/create-equevent/{id}',[EquEventController::class, 'create'])->where('id', '[0-9]+');   //CREATE NEW EQE
-//LURoute::post('/store-equevent',[EquEventController::class, 'store']);
-//Route::get('/email/{id}',[EquEventController::class, 'send_email'])->where('id', '[0-9]+');
-
-//Route::get('/add-equevent', [EquEventController::class, 'add']);                                     //ADD NEW EQE
-//Route::post('equevent-ajax', [EquEventController::class, 'equeventEvents']);        //IN USE for search
-//LURoute::get('add-equevent', [EquEventController::class, 'index']);
-//LURoute::post('add-equevent', [EquEventController::class, 'index'])->name('add-equevent.filter');
-//Route::post('select-event-request', [EquEventController::class, 'selectRequestPost'])->name('selectRequest.post');
 
 //------------------------------------------------------------------------------------------------------------
 //Route for mailing
@@ -163,43 +156,4 @@ Route::get('/***email', function () {
     // option to go: return view('eqcalendar');
     return redirect('/calendar-event');
 
-    //var_dump( Mail:: failures());   //if non sent error in string, with out empty string: array(0) { }
-    //exit;
-    
-//----------------------------------------------------------------------
-    //Mail::to($emails)->send(new EventMail);
-//----------------------------------------------------------------------
-    //Mail::to('mojweb@email.cz')->queue(new EventMail);
-//----------------------------------------------------------------------
-    //$when = Carbon\Carbon::now()->addMinutes(10);
-    //Mail::to('mojweb@email.cz')->later($when, new EventMail);
-//----------------------------------------------------------------------
-    /*Mail::send(new EventMail, [], function($message) use ($emails)
-    {
-        $message->to($emails)->subject('This is test, to send e-mail');  
-    });*/
-//----------------------------------------------------------------------
-    /*$data = [];
-    Mail::send(new EventMail, $data, function ($message) {
-        $message->from('lavietzigane@gmail.com', 'My Welcome');    
-        $message->to('djordjino@seznam.cz')->cc('mojweb@email.cz');
-    });*/
-//----------------------------------------------------------------------
-    /*//list of methods on the $message Laravel message builder instance 
-    $message->from($email, $username = null);
-    $message->sender($email, $username = null);
-    $message->to($email, $username = null);
-    $message->cc($email, $username = null);
-    $message->bcc($email, $username = null);
-    $message->replyTo($email, $username = null);
-    $message->subject($subject);
-    $message->priority($level);
-    $message->attach($pathToFile, array $options = []);
-
-    // Image or Attach a file from a some raw $data string...
-    $message->attachData($data, $username, array $options = []);
-
-    // Retrive the underlying simple Laravel SwiftMailer message instance...
-    $message->getSwiftMessage();
-    */
 });

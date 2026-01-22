@@ -72,6 +72,14 @@
                             </div>
                         </div>
 
+                        @if($item_selected->description != null)
+                        <div class="mb-3">
+                            <label>Description</label>
+                            <!--textarea readonly name="description" cols="22" rows="3" class="form-control">{-!! $item_selected->description !!}</textarea-->
+                            <div class="fake-textarea" style="max-height: 130px; height: auto;">{!! $item_selected->formatted_description !!}</div>
+                        </div>
+                        @endif
+                        
                         <div class="container-show">
                             <div class="mb-3-half">
                                 <label>Email</label>
@@ -85,13 +93,23 @@
                             @endif
                         </div>
 
-                        <div class="dropdown-divider"></div>
+                    <div class="dropdown-divider"></div>
                         <div class="mb-3">
-                            @if (auth()->user() && isset(Auth::user()->id))
-                                <a id="corrBtn" class="btn btn-sm btn-outline-primary toolbar-btn">Correct/Add (some) more info about {{ $item_selected->first_name }}&nbsp;{{ $item_selected->last_name }}</a>
-                            @else
-                                <p>Correct or Add some more info about {{ $item_selected->first_name }}&nbsp;{{ $item_selected->last_name }}, only after <a href="{{ route('login') }}" class="btn btn-sm btn-info">{{ __('Login') }}</a></p>
+                        @auth
+                            @if (auth()->user() && isset(Auth::user()->id) && auth()->user()->hasVerifiedEmail())
+                                <a id="corrBtn" class="btn btn-sm btn-outline-primary toolbar-btn">
+                                    Correct/Add (some) more info about {{ $item_selected->first_name }}&nbsp;{{ $item_selected->last_name }}
+                                </a>
+                            @elseif (!auth()->user()->hasVerifiedEmail())
+                                <button class="btn btn-sm btn-outline-secondary toolbar-btn" disabled title="Verify your email to unlock">
+                                    Correct/Add (some) more info about {{ $item_selected->first_name }}&nbsp;{{ $item_selected->last_name }} ...(Verification Required)
+                                </button>
                             @endif
+                        @else
+                                <button class="btn btn-sm btn-outline-secondary toolbar-btn" disabled title="Verify your email to unlock">
+                                    Correct/Add (some) more info about {{ $item_selected->first_name }}&nbsp;{{ $item_selected->last_name }} ... (Login Required)
+                                </button>&nbsp;&nbsp;<a href="{{ route('login') }}" class="btn btn-sm btn-info">{{ __('Login') }}</a>    
+                        @endauth
                         </div>
                         @if(session('success'))
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -135,18 +153,20 @@
                             <input value="{{ $item_selected->updated_at }}" readonly name="updated_at" type="text" class="form-control">
                         </div>
                         <div class="mb-3">
-                            @if (auth()->user() && isset(Auth::user()->id))
+                            @auth
                                 @if ((Auth::user()->id == $item_selected->owner_id) || Auth::user()->id == 1)
                                     <a href="{{ url('/edit/'.$item_selected->id) }}" class="btn btn-sm btn-info">Edit</a>
                                 @else
                                     <p>"Only the person who made the following entry is allowed to Edit or Upload Photos (must be logged)"</p> 
                                     <p>"PERMISSION TO EDIT" only to the original creator of record. Otherwise you can Correct/Add/Comment more info...</p>
                                 @endif
-
                                 @if (Auth::user()->id == 1)
                                     <a href="{{ url('/destroy/'.$item_selected->id) }}" class="btn btn-sm btn-danger">Delete</a>
                                 @endif
-                            @endif
+                            @else
+                                <p>"Only the person who made the following entry is allowed to Edit or Upload Photos (must be logged)"</p> 
+                                <p>"PERMISSION TO EDIT" only to the original creator of record. Otherwise you can Correct/Add/Comment more info...</p>
+                            @endauth
                         </div>
                     </div>            
                 </div>
@@ -188,7 +208,8 @@
                         
                         <div class="mb-3">
                             <label>Description</label>
-                            <textarea readonly name="description" cols="22" rows="5" class="form-control">"{{ $item->description }}"</textarea>
+                            <!--textarea readonly name="description" cols="22" rows="5" class="form-control">"{-{ $item->description }}"</textarea-->
+                            <div class="fake-textarea" style="max-height: 200px; height: auto;">{!! $item->formatted_description !!}</div>
                         </div>
                         <!--div style="height: 1px; background-color: black; margin: 10px 0;"></div-->
                 
@@ -339,7 +360,6 @@
     </script>
 @-endif-->
 <!-- ************************************************************* Info Modal End *** -->
-
 <script>
     (function(){
 

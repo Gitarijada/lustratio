@@ -64,7 +64,7 @@ function get_data_event(filterRoute, eventID = null, type = 'data-event-rest') {
                             if (data_rest) {
                                 data_rest.remove();
                             }
-
+                           
                             $('#' + type + '-append').append(data.html);
                             // IMPORTANT — reinitialize after injecting the HTML
                             LocationSelector.init();
@@ -77,8 +77,8 @@ function get_data_event(filterRoute, eventID = null, type = 'data-event-rest') {
                         const locationID2 = document.getElementById('location_id2');
                      
                         categoryID.value = data.item_selected.category_id;
-                        if (locationID) locationID.value = data.item_selected.location_id;
-                        else if (locationID2) locationID2.value = data.item_selected.location_id;
+                        if (locationID2) locationID2.value = data.item_selected.location_id;
+                        else if (locationID) locationID.value = data.item_selected.location_id;
                         
                         if (data_rest) {
                             data_rest.remove();

@@ -127,9 +127,11 @@
                 <!-- Toolbar below image -->
                 <div class="d-flex justify-content-center align-items-center mt-3">
                     <div id="toolbar">
-                        @if (auth()->user() && isset(Auth::user()->id) && Auth::user()->id <= 14)
-                        <button id="deleteBtn" class="btn btn-sm btn-outline-danger toolbar-btn">Delete</button>
-                        @endif
+                        @auth
+                            @if (auth()->user() && isset(Auth::user()->id) && Auth::user()->id < 10)
+                                <button id="deleteBtn" class="btn btn-sm btn-outline-danger toolbar-btn">Delete</button>
+                            @endif
+                        @endauth
                         <a id="famousBtn" href="{{ url('/make_famous/') }}" class="btn btn-sm btn-outline-danger toolbar-btn">Ucinimo Ga Poznatim</a>
                         <!--span id="filenameLabel" class="ms-2 text-muted small"></span-->
                     </div>

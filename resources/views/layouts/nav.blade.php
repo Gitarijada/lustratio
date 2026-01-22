@@ -14,7 +14,7 @@
                 
                 <div class="navbar-nav">
                     <!--a class="nav-link active" aria-current="page" href="{***{ url('/') }}">Home</a-->
-                    <a class="nav-link active" aria-current="page" href="{{ url('/fame_all2') }}">BE FAMOUS</a>
+                    <a class="nav-link active" aria-current="page" href="{{ url('/fame-all2') }}">BE FAMOUS</a>
                     <a class="nav-link active" aria-current="page" href="{{ url('/equ') }}">SLUCAJEVI</a>
                     <a class="nav-link active" aria-current="page" href="{{ url('/list-event') }}">EVENTS</a>
 
@@ -24,7 +24,7 @@
                           </a>
                     
                         <div class="dropdown-content" aria-labelledby="dropdownMenuLink">
-                            <a class="dropdown-item" href="{{ url('/upload_guess_img') }}">DODAJ GA POZNATIM</a>
+                            <a class="dropdown-item" href="{{ url('/upload-guess') }}">DODAJ GA POZNATIM</a>
                             <a class="dropdown-item" href="{{ url('/equ') }}">SLUCAJEVI</a>
                             <a class="dropdown-item" href="{{ url('/list-event') }}">EVENTS</a>
                             <div class="dropdown-divider"></div>
@@ -33,13 +33,6 @@
                             <a class="dropdown-item" href="{{ url('/add-valeevent') }}">ADD VALE TO EVENT</a>
                             <a class="dropdown-item" href="{{ url('/create_ve') }}">CREATE SLUCAJ I EVENT</a>
                             <div class="dropdown-divider"></div>
-                            <!--LU
-                            <a class="dropdown-item" href="{--{ url('/list-crew') }}">CREW</a>
-                            <a class="dropdown-item" href="{--{ url('/add-crew') }}">ADD CREW TO EVENT</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="{--{ url('/list-group-event') }}">SEASONS</a>
-                            <a class="dropdown-item" href="{--{ url('/create-group-event') }}">CREATE SEASONS</a>
-                            -->
                         </div>
                     </div>
 
@@ -57,33 +50,30 @@
                     </div>
 					
                     <a class="nav-link active" aria-current="page" href="{{ URL('/about')}}">&nbsp;About</a>
-                    <!--
-                    <a class="nav-link" href="#">Features</a>
-                    <a class="nav-link" href="#">Pricing</a>
-                    <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
-                    -->
                 </div>
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <!-- Left Side Of Navbar -->
                     <ul class="navbar-nav mr-auto">
-                        @if (auth()->user() && isset(Auth::user()->id) && Auth::user()->id <= 3)
+                        @auth
+                        @if (auth()->user() && isset(Auth::user()->id) && Auth::user()->id < 10)
                             <div class="dropdown">
-                                <a class="nav-link active" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    &nbsp;&nbsp;&nbsp;&nbsp;Der Rote&nbsp;&nbsp;
+                                <a class="nav-link active" href="{{ URL('/news')}}" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    &nbsp;&nbsp;&nbsp;Novosti&nbsp;&nbsp;
                                 </a>
-                    
+                                @if (Auth::user()->id <= 3)
                                 <div class="dropdown-content" aria-labelledby="dropdownMenuLink">
                                     <a class="dropdown-item" href="{{ url('/rote') }}">DER ROTE</a>
-                                    <a class="dropdown-item" href="{{ url('/rote_unlimit') }}">DER UNLIMIT</a>
+                                    <a class="dropdown-item" href="{{ url('/rote_create') }}">DER CREATE</a>
                                     <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="{{ url('/rote_create') }}">NEW CASE</a>
-                                    <a class="nav-link active" aria-current="page" href="{{ url('/fame') }}">GUESS LIST</a> <!--show list of images_guess folder-->
+                                    <a class="dropdown-item" href="{{ url('/rote_create_ve') }}">DER C S&E</a>
                                     <a class="nav-link active" aria-current="page" href="{{ url('/modaltest2') }}">MODALTEST2</a>
                                     <div class="dropdown-divider"></div>
                                 </div>
+                                @endif
                             </div>
                         @endif
+                        @endauth
                     </ul>
 
                     <!-- Right Side Of Navbar -->
@@ -103,23 +93,6 @@
                                 </li>
                             @endif
                         @else
-                            <!--li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                    {***{ Auth::user()->username }}
-                                </a>
-
-                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="{***{ route('logout') }}"
-                                       onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
-                                        {***{ __('Logout') }}
-                                    </a>
-
-                                    <form id="logout-form" action="{***{ route('logout') }}" method="POST" class="d-none">
-                                        @***csrf
-                                    </form>
-                                </div>
-                            </li-->
                             <li class="nav-item dropdown">
                                 <div class="dropdown">
                                     <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>

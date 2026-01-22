@@ -53,6 +53,10 @@
   border-top: 1px solid #dee2e6;
 }*/
 
+.mandatory-star-label {
+    color: red;     /*#8B0000; /* dark red */
+}
+
 .modal-bckg {
       background-image: url('/images/eve_bckg.jpg'); /* Your JPG file {{ asset('images/eve_bckg.jpg') }}*/
       background-size: cover; /* Cover the entire area */
@@ -218,6 +222,27 @@ tr.status-4,
 .subject-line_C {
   color: #007bff; /* A shade of blue */
   background-color: #FFFFE0; /* Light yellow */
+}
+
+.fake-textarea {
+  /*width: 22ch;
+  height: 3em;   or*/ 
+  /*min-height: 10px; 
+  height: auto;*/
+  
+  /* Scrolling behavior */
+  overflow-y: auto;   /* Adds vertical scrollbar only if text overflows */
+  white-space: pre-wrap; /* Preserves line breaks and wraps text like a textarea */
+  resize: vertical; /* Optional: allows manual resizing like a real textarea */
+  
+  /* Standard textarea styling */
+  border: 1px solid #ced4da;
+  padding: 0.375rem 0.75rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #495057;
+  /*font-family: monospace; /* Essential for "ch" units to align precisely */
+  background: #e9ecef;
 }
 
 /*

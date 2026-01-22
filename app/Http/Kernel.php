@@ -37,7 +37,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            //\App\Http\Middleware\TrackPageView::class,     //MY change for count visits, uncomement to fill DB with pages visits 
+            //\App\Http\Middleware\TrackPageView::class,     //LUST change for count visits, uncomement to fill DB with every pages visits 
         ],
 
         'api' => [
@@ -65,5 +65,6 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'admin' => \App\Http\Middleware\MustBeAdministrator::class,
+        'count.views' => \App\Http\Middleware\TrackPageView::class,    //LUST only pages where explicitly add ->middleware('count.views') in routes/web.php will be recorded
     ];
 }

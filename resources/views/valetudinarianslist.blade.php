@@ -92,12 +92,12 @@
                     </td>
                     <td>{{ strtok($valetudinarian->date_of_birth, '-') }}</td>
                     <td><div class="col-200-ellipsis-auto">{{ $valetudinarian->occupation }}</div></td>
-                    @if(isset($layout) && $layout == 'index')<td><div class="col-200-auto">{{ $valetudinarian->position }}</div></td>@endif
+                    @if(isset($layout) && $layout == 'index')<td><div class="col-200-ellipsis-auto">{{ $valetudinarian->position }}</div></td>@endif
                     <td><div class="col-250-ellipsis-auto">{{ $valetudinarian->party_name }}</div></td>
                     <td>{{ $valetudinarian->location_name }}</td>
                     <!--td>{***{ $equipment->availability }}</td-->
                     <td>
-                        @if ( isset(Auth::user()->id) && auth()->user())
+                        @auth             
                             @if ((Auth::user()->id == $valetudinarian->owner_id) || Auth::user()->id == 1)
                                 <!--@***if (isset(Auth::user()->role_id) && Auth::user()->role_id == 1)-->
                                 <!--@***if (Auth::user())-->
@@ -106,16 +106,17 @@
                                 </a>
                                 &emsp;--> 
                                 <!--<a href="#" class="btn btn-sm btn-info">Show</a>-->
-                                <a href="{{ url('/edit/'.$valetudinarian->id.'?page='.$valetudinarians->currentPage()) }}" class="btn btn-sm btn-info">Edit</a>
+                                <a href="{{ url('/edit/'.$valetudinarian->id.'?page='.optional($valetudinarians)->currentPage() ?? 1) }}" class="btn btn-sm btn-info">Edit</a>
+                                <!--a href="{-{ url('/edit/'.$valetudinarian->id.'?page='.$valetudinarians->currentPage()) }}" class="btn btn-sm btn-info">Edit</a-->
                             @endif
 
                             @if (Auth::user()->id == 1)
-                                <a href="{{ url('/destroy/'.$valetudinarian->id.'?page='.$valetudinarians->currentPage()) }}" class="btn btn-sm btn-danger">Delete</a>
+                                <a href="{{ url('/destroy/'.$valetudinarian->id.'?page='.optional($valetudinarians)->currentPage() ?? 1) }}" class="btn btn-sm btn-danger">Delete</a>
                                 <!--<a href="" class="btn btn-sm btn-danger">Delete</a>-->
                             @endif
                         <!--@ else
                             <p>Please login, to edit items.</p-->
-                        @endif
+                        @endauth
                     </td>
                 </tr>
             @endforeach
@@ -125,7 +126,7 @@
         </div>
     </div>
 </div>
-@if(method_exists($valetudinarians, 'links'))
+@if(is_object($valetudinarians) && method_exists($valetudinarians, 'links'))
     <div id="pagination-links" class="paginate_div">{{ $valetudinarians->links() }}</div>
 @endif
 <div id="layout" data-layout="{{ $layout }}">

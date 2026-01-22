@@ -4,8 +4,8 @@
     <div class="mb-3 item" data-help-title="KATEGORIJA Help"
         data-help-text="This box represents the first category. It may contain photos, files, or text data associated with section one.">
         <div class="category-container-button">
-            <label>KATEGORIJA</label>
-            @if($layout === 'create_vale_event')
+            <label>KATEGORIJA <span class="mandatory-star-label">*</span></label>
+            @if($layout == 'make_famous' || $layout === 'create_vale_event')
                 <a id="existingEventBtn" data-mode="data-event-main" class="btn btn-sm btn-outline-primary toolbar-btn">Choose Among Existing Events</a>
             @elseif($layout === 'choose')
                 <a id="existingEventBtn" data-mode="data-event-combined" class="btn btn-sm btn-outline-primary toolbar-btn">New Event</a>
@@ -28,7 +28,7 @@
     <div class="dropdown-divider"></div>
     <div class="mb-3 item" data-help-title="Event Name Help"
         data-help-text="This box represents the first category. It may contain photos, files, or text data associated with section one.">
-        <label>Event Name</label>
+        <label>Event Name <span class="mandatory-star-label">*</span></label>
         @if($layout != 'add' && $layout != 'choose')
             <input @if($layout == 'edit') value="{{ $item_selected->event_name }}"@endif id="event_name" name="event_name" type="text" class="form-control" placeholder="Enter the Event Name*">
         @else
@@ -47,7 +47,9 @@
         @endif 
     </div>
     <div class="mb-3">
-            <label>Lokacija</label>
+        @if($layout != 'choose')<label>Lokacija <span class="mandatory-star-label">* ako je lokacija dogadjaja na vise teritorija ne unosi se ili unesi "SRBIJA"</span></label>
+        @else<label>Lokacija <span class="mandatory-star-label">*</span></label>
+        @endif
             @if($layout == 'make_famous' || $layout == 'create_vale_event' || $layout == 'choose')
                     <!--@-include("location_list2")-->
                 @include("location_list-template2")

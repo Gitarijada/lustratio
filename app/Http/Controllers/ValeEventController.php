@@ -27,7 +27,7 @@ class ValeEventController extends Controller
     public function __construct(DataService $dataService)
     {
         //$this->middleware('auth');    // HERE what ya are allowed to access if not loged in
-        $this->middleware('auth', ['except' => ['show']]);
+        $this->middleware(['auth', 'verified'], ['except' => ['show']]);
 
         $this->dataService = $dataService;
     }
@@ -103,7 +103,7 @@ class ValeEventController extends Controller
                 });
             }*/
             $sql = "SELECT a.id, a.first_name, a.last_name, a.date_of_birth, a.party_id, c.name AS party_name, a.location_id, d.region, 
-                        d.city_zip, d.name AS location_name, a.owner_id,
+                        d.city_zip, d.name AS location_name, a.owner_id, status,
                         COALESCE(ev.used_by_other, 0) AS used_by_other" . $sql_selected . " FROM valetudinarians a
                     LEFT JOIN parties c on a.party_id = c.id
                     LEFT JOIN locations d on a.location_id = d.id
@@ -112,7 +112,7 @@ class ValeEventController extends Controller
                         GROUP BY valetudinarian_id) ev ON a.id = ev.valetudinarian_id";
         } else {
             $sql = "SELECT DISTINCT a.id, first_name, last_name, date_of_birth, party_id, c.name AS party_name,
-                    location_id, d.region, d.city_zip, d.name as location_name, owner_id, '1' AS used_by_other
+                    location_id, d.region, d.city_zip, d.name as location_name, owner_id, status, '1' AS used_by_other
                     FROM valetudinarians a
                     LEFT JOIN parties c ON a.party_id = c.id
                     LEFT JOIN locations d ON a.location_id = d.id";
@@ -402,46 +402,6 @@ class ValeEventController extends Controller
                     }
                     
                     return response()->json($events);
-                } 
-            break;
-
-            case 'show':
-                if($request->ajax()) { 
-                    $sql = "SELECT DISTINCT a.*, c.name AS store_name, d.name AS category_name
-                                FROM equipments a 
-                                INNER JOIN (equ_events b, stores c, categories d) 
-                                ON (a.id = b.equipment_id AND a.store_id = c.id AND a.category_id = d.id)";
-                    
-                    $where = array();
-                    if ($request->event_ID) {
-                        $where[] = "b.event_id = $request->event_ID";
-                    }
-                    if ($request->store_ID) {
-                        $where[] = "a.store_id = $request->store_ID"; 
-                    }
-                    if ($request->category_ID) {
-                        $where[] = "a.category_id = $request->category_ID"; 
-                    }
-                    if ($request->search_Str) {
-                        $where[] = "(a.name LIKE '%$request->search_Str%' OR
-                                a.brand LIKE '%$request->search_Str%' OR
-                                a.model LIKE '%$request->search_Str%' OR
-                                a.serial_number LIKE '%$request->search_Str%' OR 
-                                a.registration_number LIKE '%$request->search_Str%')";
-                    }
-        
-                    foreach ($where as $key => $item) {
-                        if ($key == 0) {
-                            $sql .= " WHERE ";
-                        } else {
-                            $sql .= " AND ";
-                        }
-                        $sql .= $item;
-                    }   
-                        
-                    $equipments = DB::select($sql);  
-                    
-                    return response()->json($equipments);
                 } 
             break;
              

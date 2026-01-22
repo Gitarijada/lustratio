@@ -110,7 +110,7 @@
                         <h6>Vazno je - Da ih ne zaboravimo - Da znamo ko su - Da ostanu upamceni</h6>
                     </div>
                     <p>Mozete razgledati slike osoba <strong>’Učinimo ih poznatim’</strong>
-                    <a href="{{ url('/fame_all2/') }}" class="btn btn-sm btn-outline-danger toolbar-btn">Galerija 'Učinimo ih poznatim'</a>
+                    <a href="{{ url('/fame-all2/') }}" class="btn btn-sm btn-outline-danger toolbar-btn">Galerija 'Učinimo ih poznatim'</a>
                     </p>
                 </div>
                 @endif

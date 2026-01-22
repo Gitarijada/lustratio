@@ -16,7 +16,7 @@
               </div>
               <div id="collapse-27" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion" style="" aria-expanded="true">
                   <div class="card-body"><p>
-                  <strong>Revolt</strong><br> @revolt  · Media<br> <a href="http://www.revolt.rs/">http://www.revolt.rs</a><br> se sídlem: Belhradska 1284/22, 120 00 Praha 2&nbsp;<br> zapsaná: v&nbsp;obchodním rejstříku vedeném u Městského soudu v&nbsp;Praze, sp.zn. B 17009</p>
+                  <strong>Ćacilend</strong><br> @Ćacilend  · Media<br> <a href="http://www.cacilend.org/">http://www.cacilend.org</a><br> se sídlem: Trg Nikole Pašića bb, 11000 Beograd&nbsp;<br> zapsaná: v&nbsp;obchodním rejstříku vedeném u Městského soudu v&nbsp;Belhrade, sp.zn. B 17009</p>
                   </div>
               </div>
           </div>
@@ -34,7 +34,7 @@
           <p>that someone intends to achieve.&nbsp;;</p>
       </li>
       <li class="text-gray-700 list-none">
-          <p>It can be a specific outcome, a desired achievement, or a general direction of effort.</p>
+          <p>It can be a specific outcome, a desired achievement, or a general direction of effort. ĆACILEND</p>
       </li>
     </ol>
     </div>

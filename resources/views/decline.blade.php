@@ -14,6 +14,9 @@
                         </div>
                     @endif
 
+                    <div style="font-style: italic;">
+                        {{ __('"You must be registered and logged" You need an account and must sign in to access a all website\'s features') }}
+                    </div>
                     {{ __('There is set up for factor authentication and you have not authenticated in such ways...') }}
                     <div></div> <!--make new line-->
                     {{ __('You still can do surfing through data exploring people and events') }}

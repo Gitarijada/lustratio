@@ -93,15 +93,15 @@
                     @endif
 
                     <td>
-                        @if (auth()->user() && isset(Auth::user()->id))
+                        @auth
                             @if ((Auth::user()->id == $valetudinarian->owner_id) || Auth::user()->id == 1)
-                                <a href="{{ url('/edit/'.$valetudinarian->id) }}" class="btn btn-sm btn-info">Edit</a>
+                                <a href="{{ url('/edit/'.$valetudinarian->id.'?page='.optional($valetudinarians)->currentPage() ?? 1) }}" class="btn btn-sm btn-info">Edit</a>
                             @endif
 
                             @if (Auth::user()->id == 1)
-                                <a href="{{ url('/destroy/'.$valetudinarian->id) }}" class="btn btn-sm btn-danger">Delete</a>
+                                <a href="{{ url('/destroy/'.$valetudinarian->id.'?page='.optional($valetudinarians)->currentPage() ?? 1) }}" class="btn btn-sm btn-danger">Delete</a>
                             @endif
-                        @endif
+                        @endauth
                     </td>
                 @endif
                                 
@@ -112,7 +112,7 @@
     </div>
 
 </div>
-@if(method_exists($valetudinarians, 'links'))
+@if(is_object($valetudinarians) && method_exists($valetudinarians, 'links'))
     <div id="pagination-links" class="paginate_div">{{ $valetudinarians->links() }}</div>
 @endif
 

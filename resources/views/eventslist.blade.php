@@ -86,28 +86,34 @@
                     @else
                         <!--td><a href="{-{ url('/edit-event/'.$event->id) }}" class="btn btn-sm btn-info">List subjects</a></td-->
                         <td>
-                            <div id="buttDiv" class="dropdown col-w120-auto" data-id={{ $event->id }}>
-                            <button id="valBtn{{ $event->id }}" value={{ $event->id }} class="dropbtn">List Names  ****</button>
-                                <div id="valeList_{{ $event->id }}" class="dropdown-content">
-                                    <input hidden type="text" placeholder="Search.." id="myInput" onkeyup="filterFunction()">
-                                </div>
-                            </div>
+                            @auth
+                                @if (auth()->user() && isset(Auth::user()->id) && auth()->user()->hasVerifiedEmail())
+                                    <div id="buttDiv" class="dropdown col-w120-auto" data-id={{ $event->id }}>
+                                    <button id="valBtn{{ $event->id }}" value={{ $event->id }} class="dropbtn">List Names  ****</button>
+                                        <div id="valeList_{{ $event->id }}" class="dropdown-content">
+                                            <input hidden type="text" placeholder="Search.." id="myInput" onkeyup="filterFunction()">
+                                        </div>
+                                    </div>
+                                @endif
+                            @else
+                                <button disabled id="valBtn{{ $event->id }}" value={{ $event->id }} class="dropbtn">List Names  ****</button>
+                            @endauth
                         </td>
                     @endif
                     <td>{{ $event->category_name }}</td>
                     <!--td>{-{ $event->count_valID }}</td-->
                     <td>
-                        @if (auth()->user() && isset(Auth::user()->id))
+                        @auth
                             @if ((Auth::user()->id == $event->owner_id) || Auth::user()->id == 1)
-                                <a href="{{ url('/edit-event/'.$event->id.'?page='.$events->currentPage()) }}" class="btn btn-sm btn-info">Edit</a>
+                                <a href="{{ url('/edit-event/'.$event->id.'?page='.optional($events)->currentPage() ?? 1) }}" class="btn btn-sm btn-info">Edit</a>
                             @endif
 
                             @if (Auth::user()->id == 1)
-                                <a href="{{ url('/destroy-event/'.$event->id.'?page='.$events->currentPage()) }}" class="btn btn-sm btn-danger">Delete</a>
+                                <a href="{{ url('/destroy-event/'.$event->id.'?page='.optional($events)->currentPage() ?? 1) }}" class="btn btn-sm btn-danger">Delete</a>
                             @endif
-                        <!--@ else
-                            <p>Please login, to edit items.</p-->
-                        @endif
+                            <!--@ else
+                                <p>Please login, to edit items.</p-->
+                        @endauth
                     </td>
                 </tr>
             @endforeach
@@ -116,7 +122,7 @@
         </div>
     </div>
 </div>
-@if(method_exists($events, 'links'))
+@if(is_object($events) && method_exists($events, 'links'))
     <div id="pagination-links" class="paginate_div">{{ $events->links() }}</div>
 @endif
 

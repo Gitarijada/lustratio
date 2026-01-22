@@ -55,6 +55,7 @@
                         <!--input type="reset" class="btn btn-warning" value="Reset"-->
                         &emsp;
                         <a href="{{ url('list-event') }}" class="btn btn-warning">Cancel</a>
+                        <div><span class="mandatory-star-label">* denotes mandatory fields</span></div>
 
                     </form>
 
@@ -98,6 +99,7 @@
                         <!--input type="reset" class="btn btn-warning" value="Reset"-->
                         &emsp;
                         <a href="{{ url('list-event') }}" class="btn btn-warning">Cancel</a>
+                        <div><span class="mandatory-star-label">* denotes mandatory fields</span></div>
                     </form>
 
                 </div>

@@ -52,6 +52,7 @@
                 <br>
                 <input type="submit" class="btn btn-info" value="Save">&emsp;
                 <a href="{{ url('equ') }}" class="btn btn-warning">Cancel</a>
+                <div><span class="mandatory-star-label">* denotes mandatory fields</span></div>
 
                 @if($layout == 'make_famous')
                     <input id="id_guess" type="hidden" name="id_guess" value={{ $image_guess->id }}>
@@ -63,7 +64,7 @@
                     @include("event_input-main")
                     @include("event_input-rest")
                 </section>
-
+                
             </div>
             </form>
         </div>
@@ -135,12 +136,16 @@
         const regionSelect = document.getElementById('region_id2').value;
         var locationID = document.getElementById('location_id2').value;
         const local_Select = document.getElementById('local_id2').value;
-        const urlRoute = "{{ url('/') }}" + "/valeevent-ajax";
+        const urlRoute = "{{ url('/') }}" + "/valeevent-ajax"; 
         
         if (local_Select.length !== 0) locationID = local_Select;
         if (locationID.length === 0) toastr.info("LOKACIJA nije izabrana za selekciju DOGADJAJA.", 'Event'); 
 //alert('MCat '+categorySelect+' reg-> '+regionSelect+' L-> '+locationID+' local-> '+local_Select);
         fetch_select_events(urlRoute, categorySelect, regionSelect, locationID, 'KATEGORIJA izabrana za Event selekciju')
+        document.getElementById('data-event-rest')?.remove();   //modern syntax. Reset/remove bottom part of event input 
+        //Reset the select menu to the selected default value option. Here is region_id2, not region_id like in vale_event.blade
+        //$('#region_id2').val('').trigger('change.select2');   //commented because it not doing reset of selection of location_id2, but it has to.
+        $('#location_id2').val('').trigger('change.select2');   // Trigger change so Select2 updates the visual box
     });
 
     $('#data-event-main-append').on('change', '#region_id2, #location_id2', function() {     //not in use #location_id is not on the page. Maybe to expand later
@@ -149,7 +154,7 @@
         var locationID = document.getElementById('location_id2').value;
         const local_Select = document.getElementById('local_id2').value;
         const urlRoute = "{{ url('/') }}" + "/valeevent-ajax";
-
+    
         var message = 'LOKACIJA izabrana za selekciju DOGADJAJA.';
         if (local_Select.length !== 0) {
             locationID = local_Select;
@@ -157,6 +162,7 @@
         if (categorySelect.length === 0) toastr.info("KATEGORIJA nije izabrana za selekciju DOGADJAJA.", 'Event'); 
 
 		fetch_select_events(urlRoute, categorySelect, regionSelect, locationID, message)
+        document.getElementById('data-event-rest')?.remove();
     });
 
     $('#data-event-main-append').on('change', '#ev_id', function () {

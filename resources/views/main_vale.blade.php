@@ -145,7 +145,7 @@
                         <h5><strong>Da ih Pronadjemo</strong></h5>
                     </div>
                     <p>Imamo i Galeriju <strong>'’Učinimo ih Poznatim’'</strong> gde mozete prepoznati osobu i uneti podatke o njoj i dogadjaju. 
-                        Ova opcija u vecoj rezoluciji <a href="{{ url('/fame_all2/') }}" class="btn btn-sm btn-outline-danger toolbar-btn">Galerija 'Učinimo ih poznatim'</a>
+                        Ova opcija u vecoj rezoluciji <a href="{{ url('/fame-all2/') }}" class="btn btn-sm btn-outline-danger toolbar-btn">Galerija 'Učinimo ih poznatim'</a>
                     </p> 
                 </div>
                 <!-- Navigation arrows -->

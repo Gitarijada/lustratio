@@ -49,6 +49,7 @@
                         <!--input type="reset" class="btn btn-warning" value="Reset"-->
                         &emsp;
                         <a href="{{ url('equ') }}" class="btn btn-warning">Cancel</a>
+                        <div><span class="mandatory-star-label">* denotes mandatory fields</span></div>
 
                     </form>
                 </div>
@@ -85,11 +86,11 @@
                     <form action="{{ url('/update/'.$item_selected->id.'?page='.$valetudinarians->currentPage()) }}" method="post">
                         @csrf
                         <div class="mb-3">
-                            <label>Ime</label>
+                            <label>Ime <span class="mandatory-star-label">*</span></label>
                             <input value="{{ $item_selected->first_name }}" name="first_name" type="text" class="form-control" placeholder="Enter the First Name">
                         </div>
                         <div class="mb-3">
-                            <label>Prezime</label>
+                            <label>Prezime <span class="mandatory-star-label">*</span></label>
                             <input value="{{ $item_selected->last_name }}" name="last_name" type="text" class="form-control" placeholder="Enter the Last Name">
                         </div>
                         <div class="mb-3">
@@ -101,6 +102,25 @@
                             <label>Datum Rodjenja</label>
                             <input value="{{ $item_selected->date_of_birth }}" name="date_of_birth" type="date" class="form-control" placeholder="Enter date of birth">
                         </div>
+
+                        <div class="mb-3">
+                            <label>Organizacija <span class="mandatory-star-label">*</span></label>
+                            <select name="party_id" class="form-control">
+                                @foreach($parties as $party)
+                                    @if(isset($item_selected) && $party->id == $item_selected->party_id)
+                                        <option value="{{$party->id}}" selected>{{$party->name}}</option>
+                                    @else
+                                        <option value="{{$party->id}}">{{$party->name}}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Lokacija <span class="mandatory-star-label">*</span></label>
+                            @include("location_list-template")
+                        </div>
+
                         <div class="container-show">
                             <div class="mb-3-60prc item" data-help-title="Zanimanje Help"
                                 data-help-text="Zanimanje/profesija subjekta. Pocnite da kucate zanimanje u polje, pa izaberite nesto od ponudjenog ili unesite novo zanimanje ako ni jedno od ponudjenih ne odgovara.">
@@ -118,22 +138,10 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label>Lokacija</label>
-                            @include("location_list-template")
-                        </div>
-
-                        <div class="mb-3">
-                            <label>Organizacija</label>
-                            <select name="party_id" class="form-control">
-                                @foreach($parties as $party)
-                                    @if(isset($item_selected) && $party->id == $item_selected->party_id)
-                                        <option value="{{$party->id}}" selected>{{$party->name}}</option>
-                                    @else
-                                        <option value="{{$party->id}}">{{$party->name}}</option>
-                                    @endif
-                                @endforeach
-                            </select>
+                        <div class="mb-3" item" data-help-title="Description Help" 
+                            data-help-text="Ako imate neke vazne podatke o samoj osobi. Podatke o dogadjaju ne unositi ovde. Polje nije obavezno.">
+                            <label>Description</label>
+                            <textarea name="val_description" cols="22" rows="3" class="form-control" placeholder="Do 600 karaktera max">{{ $item_selected->description }}</textarea>
                         </div>
                         
                         <div class="container-show">
@@ -160,7 +168,7 @@
                         <!--input type="reset" class="btn btn-warning" value="Reset"-->
                         &emsp;
                         <a href="{{ url('equ') }}" class="btn btn-warning">Cancel</a>
-
+                        <div><span class="mandatory-star-label">* denotes mandatory fields</span></div>
                     </form>
 
                 </div>

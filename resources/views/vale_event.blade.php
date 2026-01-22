@@ -46,7 +46,7 @@
                             <input value="{{ $event->updated_at }}" readonly name="updated_at" type="text" class="form-control">
                         </div>
                         <div class="mb-3">
-                            @if (auth()->user() && isset(Auth::user()->id))
+                            @auth
                                 @if ((Auth::user()->id == $event->owner_id) || Auth::user()->id == 1)
                                     <a href="{{ url('/edit-event/'.$event->id) }}" class="btn btn-sm btn-info">Edit</a>
                                 @else
@@ -57,7 +57,10 @@
                                 @if (Auth::user()->id == 1)
                                     <a href="{{ url('/destroy-event/'.$event->id) }}" class="btn btn-sm btn-danger">Delete</a>
                                 @endif
-                            @endif
+                            @else
+                                <p>"Only the person who made the following entry is allowed to Edit or Upload Photos, after Login"</p> 
+                                <p>"PERMISSION TO EDIT" only to the original creator of record.</p>
+                            @endauth
                         </div>
                     </div>            
                     </div>
@@ -115,7 +118,9 @@
                     @if($layout == 'show')
                         <div class="mb-3">
                             <label>Description</label>
-                            <textarea disabled name="event_description" cols="40" rows="12" class="form-control">{{ $event->description }}</textarea>
+                            <!--textarea disabled name="event_description" cols="40" rows="12" class="form-control">{-{ $event->description }}</textarea-->
+                            <div class="fake-textarea" style="max-height: 200px; height: auto;">{!! $event->formatted_description !!}</div>
+
                         </div>
                     @else
                         <!--input type="submit" class="btn btn-info" value="Save">
@@ -233,6 +238,10 @@
         if (locationID.length === 0) toastr.info("LOKACIJA nije izabrana za selekciju DOGADJAJA.", 'Event'); 
 //alert('MCat '+categorySelect+' reg-> '+regionSelect+' L-> '+locationID+' local-> '+local_Select);
         fetch_select_events(urlRoute, categorySelect, regionSelect, locationID, 'KATEGORIJA izabrana za Event selekciju.')
+        document.getElementById('data-event-rest')?.remove();   //modern syntax. Reset/remove bottom part of event input 
+        //Reset the select menu to the selected default value option. Here is region_id, not region_id2 like in vale_event_input.blade
+        //$('#region_id').val('').trigger('change.select2');   //commented because it not doing reset of selection of location_id2, but it has to.
+        $('#location_id').val('').trigger('change.select2');   // Trigger change so Select2 updates the visual box
     });
 
     $('#data-event-main-append').on('change', '#region_id, #location_id', function() {     //not in use #location_id is not on the page. Maybe to expand later
@@ -249,6 +258,7 @@
         if (categorySelect.length === 0) toastr.info("KATEGORIJA nije izabrana za selekciju DOGADJAJA.", 'Event'); 
 
 		fetch_select_events(urlRoute, categorySelect, regionSelect, locationID, message)
+        document.getElementById('data-event-rest')?.remove();
     });
     
     $('#data-event-main-append').on('change', '#ev_id', function () {

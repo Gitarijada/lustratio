@@ -28,6 +28,7 @@ use App\Models\Event;
 use App\Models\ImageEvent;
 use App\Models\ValeEvent;
 use App\Models\Correction;
+use App\Models\PageView;
 
 use App\Rules\UniquePerson;
 
@@ -44,7 +45,7 @@ class ValetudinarianController extends Controller
     {
         //$this->middleware('guest');
         //$this->middleware ('admin', ['except' => ['index', 'show', 'valeventEvents']]);   //new role add in middleware, not in users table, set id 1 to be admin
-        $this->middleware('auth', ['except' => ['index', 'show', 'valeventEvents']]);    // HERE what ya are allowed to access if not loged in
+        $this->middleware(['auth', 'verified'], ['except' => ['index', 'show', 'valeventEvents']]);    // HERE what ya are allowed to access if not loged in
         //$this->middleware('signed', ['except' => ['index', 'show', 'valeventEvents']])->only('verify');
 
         $this->dataService = $dataService;
@@ -137,6 +138,7 @@ class ValetudinarianController extends Controller
             }
 
         } else {
+                       
             return view('valetudinarian',['regions'=> $regions,
                                     'cities' => $cities,
                                     //'locations'=> $locations,
@@ -232,7 +234,7 @@ class ValetudinarianController extends Controller
         //***** ajax call ****
         if($request->ajax()) {
             switch ($request->type) {
-                case 'data-event-main':
+                case 'data-event-main':     //when user choose "Choose Among Existing Events"
                     $categories = Category::all();
                     $events = Event::all();
                     $layout = 'choose';
@@ -244,7 +246,7 @@ class ValetudinarianController extends Controller
                 break;
                 case 'data-event-rest':
                     $item_selected = Event::find($request->event_ID);
-                    $layout = 'show';
+                    $layout = 'show';       //when user choose an particular Event (get Event's Data) in "Choose Among Existing Events"
                     $html = view('event_input-rest', compact('item_selected', 'layout'))->render();
                     // Return as JSON (so you can access it in AJAX success)
                     return response()->json(['html' => $html, 'item_selected' => $item_selected]);
@@ -252,7 +254,7 @@ class ValetudinarianController extends Controller
                 break;
                 case 'data-event-combined':
                     $categories = Category::all();
-                    $layout = 'create_vale_event';
+                    $layout = 'create_vale_event';      //when user choose "New Event"
                     $html_main = view('event_input-main', compact('categories', 'regions', 'locations', 'layout'))->render();
                     $html_rest = view('event_input-rest', compact('layout'))->render();
                     return response()->json([
@@ -294,7 +296,7 @@ class ValetudinarianController extends Controller
                 ],
             ]);
 
-            //if 'event_name' or'description' is not filled then we consider that user don't want to add event part and will store just val part.
+            //if 'event_name' or 'description' is not filled then we consider that user don't want to add event part and will store just val part.
             if (isset($request->event_id)) {
                 $event_id = (int)$request->event_id;
             } elseif (($request->input('event_name') != NULL) || ($request->input('description') != NULL)) { 
@@ -315,6 +317,27 @@ class ValetudinarianController extends Controller
                     ],*/
                 ]);
             }
+        
+            /*$description = $request->input('val_description');
+            if ($description) {
+                
+                // Regex pattern for standard URLs
+                $urlPattern = '/(https?:\/\/[^\s]+|www\.[^\s]+)/i';
+
+                // 1. Quick check: Only proceed if a URL is actually present
+                if (preg_match($urlPattern, $description)) {
+                    
+                    // 2. Perform the replacement to create <a> tags
+                    $description = preg_replace(
+                        $urlPattern, 
+                        '<a href="$1" target="_blank" class="text-primary">$1</a>', 
+                        $description
+                    );
+
+                    // 3. Fix links that start with "www." (missing protocol for the href)
+                    $description = str_replace('href="www.', 'href="http://www.', $description);
+                }
+            }*/
 
             $valetudinarian = new Valetudinarian();
             $valetudinarian->first_name = $request->input('first_name');
@@ -345,8 +368,9 @@ class ValetudinarianController extends Controller
                 $valetudinarian->location_id = $location_id;
             }
             $valetudinarian->party_id = (int)$request->input('party_id');
+            $valetudinarian->description = $request->input('val_description');  //$description;     //$request->input('val_description');
             $valetudinarian->owner_id = auth()->user()->id;
-    //        $valetudinarian->save();
+            $valetudinarian->save();
 
             /******* Start images */
             if($request->hasFile('image')) {
@@ -721,6 +745,7 @@ class ValetudinarianController extends Controller
             $valetudinarian->location_id = $location_id;
         }
         $valetudinarian->party_id = (int)$request->input('party_id');
+        $valetudinarian->description = $request->input('val_description');
         $valetudinarian->owner_id = auth()->user()->id;
         $valetudinarian->save();
 
@@ -793,12 +818,16 @@ class ValetudinarianController extends Controller
         $party = Party::find($item_selected->party_id);
         $location = Location::find($item_selected->location_id);
         
-        $events = DB::table('events')->where('vale_events.valetudinarian_id', '=', $id)
+        $rawEvents = DB::table('events')->where('vale_events.valetudinarian_id', '=', $id)
             ->join('vale_events', 'events.id', '=', 'vale_events.event_id')
             ->leftjoin('categories', 'events.category_id', '=', 'categories.id')
             ->leftjoin('locations', 'events.location_id', '=', 'locations.id')
             ->select('events.*', 'categories.category_name', 'locations.zip', 'locations.name')
             ->get();
+
+        // Convert generic objects into Valetudinarian Models
+        $events = \App\Models\Valetudinarian::hydrate($rawEvents->toArray());
+
         //$images = Image::find($id);
         $images = DB::table('images')->where('valetudinarian_id', '=', $id)->get();
         /*$store_category = DB::table('equipments')
@@ -936,10 +965,13 @@ class ValetudinarianController extends Controller
         if ($request->filled('party_id') && ($valetudinarian->party_id !== (int)$request->input('party_id'))) {
             $valetudinarian->party_id = (int)$request->input('party_id');
         }
+        if ($request->filled('val_description') && ($valetudinarian->description !== $request->input('val_description'))) {
+            $valetudinarian->description = $request->input('val_description');
+        }
         $valetudinarian->save();
 
         $currentPage = $request->get('page', 1);
-        return redirect('/equ?page='.$currentPage);
+        return redirect('/equ?page='.$currentPage); //LU to be FIX
     }
 
     /**

@@ -38,7 +38,7 @@
                 <!--LUtd>{--{ $vale_event->equ_start }}</td>
                 <td>{--{ $vale_event->equ_end }}</td-->
                 <td>
-                    @if (auth()->user() && isset(Auth::user()->id))
+                    @auth
                         @if ((Auth::user()->id == $equ_event->owner_id) || Auth::user()->id == 1)
                             <a href="{{ url('/edit-equevent/'.$equ_event->event_id) }}" class="btn btn-sm btn-info">Edit</a>
                         @endif
@@ -46,9 +46,9 @@
                         @if (Auth::user()->id == 1)
                             <a href="{{ url('/destroy-equevent/'.$equ_event->event_id) }}" class="btn btn-sm btn-danger">Delete</a>
                         @endif
-                    <!--@ else
-                        <p>Please login, to edit items.</p-->
-                    @endif
+                        <!--@ else
+                            <p>Please login, to edit items.</p-->
+                    @endauth
                 </td>
             </tr>
         @endforeach

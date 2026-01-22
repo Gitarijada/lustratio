@@ -25,7 +25,7 @@ class EventController extends Controller
 
     public function __construct(DataService $dataService)
     {
-        $this->middleware('auth', ['except' => ['index', 'show']]);    // HERE what ya are allowed to access if not loged in
+        $this->middleware(['auth', 'verified'], ['except' => ['index', 'show']]);    // HERE what ya are allowed to access if not loged in
         $this->dataService = $dataService;
     }
 

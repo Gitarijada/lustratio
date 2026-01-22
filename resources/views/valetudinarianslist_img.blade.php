@@ -89,6 +89,7 @@
                     <td>{{ $valetudinarian->location_name }}</td>
                     <!--td>{***{ $equipment->availability }}</td-->
                     <td>
+                        @auth
                         @if (auth()->user() && isset(Auth::user()->id))
                             @if ((Auth::user()->id == $valetudinarian->owner_id) || Auth::user()->id == 1)
                                 <!--@***if (isset(Auth::user()->role_id) && Auth::user()->role_id == 1)-->
@@ -98,16 +99,17 @@
                                 </a>
                                 &emsp;--> 
                                 <!--<a href="#" class="btn btn-sm btn-info">Show</a>-->
-                                <a href="{{ url('/edit/'.$valetudinarian->id.'?page='.$valetudinarians->currentPage()) }}" class="btn btn-sm btn-info">Edit</a>
+                                <a href="{{ url('/edit/'.$valetudinarian->id.'?page='.optional($valetudinarians)->currentPage() ?? 1) }}" class="btn btn-sm btn-info">Edit</a>
                             @endif
 
                             @if (Auth::user()->id == 1)
-                                <a href="{{ url('/destroy/'.$valetudinarian->id.'?page='.$valetudinarians->currentPage()) }}" class="btn btn-sm btn-danger">Delete</a>
+                                <a href="{{ url('/destroy/'.$valetudinarian->id.'?page='.optional($valetudinarians)->currentPage() ?? 1) }}" class="btn btn-sm btn-danger">Delete</a>
                                 <!--<a href="" class="btn btn-sm btn-danger">Delete</a>-->
                             @endif
                         <!--@ else
                             <p>Please login, to edit items.</p-->
                         @endif
+                        @endauth
                     </td>
                 </tr>
             @endforeach

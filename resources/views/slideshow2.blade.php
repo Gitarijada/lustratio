@@ -104,9 +104,11 @@
                         <a id="downloadBtn" class="btn btn-sm btn-outline-primary toolbar-btn" href="#" download>
                             <i class="bi bi-download"></i> Download
                         </a>
-                        @if (auth()->user() && isset(Auth::user()->id) && Auth::user()->id <= 14)
-                        <button id="deleteBtn" class="btn btn-sm btn-outline-danger toolbar-btn">Delete</button>
-                        @endif
+                        @auth
+                            @if (auth()->user() && isset(Auth::user()->id) && Auth::user()->id < 10)
+                                <button id="deleteBtn" class="btn btn-sm btn-outline-danger toolbar-btn">Delete</button>
+                            @endif
+                        @endauth
                         <!--button id="famous_Btn" class="btn btn-sm btn-outline-danger toolbar-btn">Ucinimo Ga Poznatim</button-->
                         <a id="famousBtn" class="btn btn-sm btn-outline-primary toolbar-btn">Učinimo Ga Poznatim</a>
                         <!--span id="filenameLabel" class="ms-2 text-muted small"></span-->

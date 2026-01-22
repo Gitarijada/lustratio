@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Rote;
 use App\Http\Controllers\Controller;
+//namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 //SERGuse Illuminate\Support\Facades;
@@ -21,21 +22,37 @@ use Carbon\Carbon;
 
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
-use Illuminate\Pagination\LengthAwarePaginator;
+//use Illuminate\Pagination\LengthAwarePaginator;
 //use Illuminate\Support\Facades\Config;
+use App\Models\Category;
+use App\Models\ImageGuess;
+use App\Models\Event;
+use App\Models\ImageEvent;
+use App\Models\ValeEvent;
+use App\Models\Correction;
+use App\Models\PageView;
+
+use App\Rules\UniquePerson;
+
+use App\Services\DataService;
+
+use Illuminate\Support\Facades\View; // Import the View facade
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
 
 class RoteController extends Controller
 {
-    public function __construct()
+    protected $dataService;
+
+    public function __construct(DataService $dataService)
     {
         //$this->middleware('guest');
         //$this->middleware ('admin', ['except' => ['index', 'show', 'valeventEvents']]);   //new role add in middleware, not in users table, set id 1 to be admin
-        $this->middleware('auth', ['except' => ['index', 'show', 'valeventEvents']]);    // HERE what ya are allowed to access if not loged in
+        $this->middleware(['auth', 'verified'], ['except' => ['index', 'show', 'valeventEvents']]);    // HERE what ya are allowed to access if not loged in
         //$this->middleware('signed', ['except' => ['index', 'show', 'valeventEvents']])->only('verify');
-    }
 
-    public $my_PAGINATION_LIMIT;
+        $this->dataService = $dataService;
+    }
 
     /**
      * Display a listing of the resource.
@@ -49,212 +66,103 @@ class RoteController extends Controller
         //$postal_get->load_from_files();
         //config('constants.ROTE_PAGINATION_LIMIT');
 
-        if (!isset($this->my_PAGINATION_LIMIT)) {
-            if (session('my_dynamic_perpage_variable')) {
-                $this->my_PAGINATION_LIMIT = session('my_dynamic_perpage_variable');
-            } else {
-                $this->my_PAGINATION_LIMIT = config('constants.ROTE_PAGINATION_LIMIT');
-            }
-        }
-
-        if($request->ajax()) { 
-
-            /** ROTE code to change PAGINATION_LIMIT with enter in search_Str field "perpage" and desired PAGINATION_LIMIT */
-            if($request->type == 'page-value'){
-                // To set a value in the session
-                session(['my_dynamic_perpage_variable' => $request->per_Page]);
-                        // or
-                        // use Illuminate\Support\Facades\Session;
-                        // Session::put('my_variable', 'some_data');
-
-                // To retrieve a value from the session
-                $this->my_PAGINATION_LIMIT = session('my_dynamic_perpage_variable');    // config('constants.ROTE_PAGINATION_LIMIT');
-                        // or
-                        // use Illuminate\Support\Facades\Session;
-                        // $value = Session::get('my_variable');
-            }
+        //$showTemp = session('showValetudinarianInfoModal');
+        if (session('showValetudinarianInfoModal') === null) {    
+            session(['showValetudinarianInfoModal' => true]);     //set to true, not set, show once 
+        } else {
+            session(['showValetudinarianInfoModal' => false]);
+        } 
+        //$showModal = session()->pull('showValetudinarianInfoModal', true);    //to reset to session('showValetudinarianInfoModal') = null
+        //session(['showValetudinarianInfoModal' => true]);   // for test purposes-always true
 
 $startTime = microtime(true);
-            /*$sql = "SELECT DISTINCT a.*, c.name AS party_name, d.name AS location_name
-                        FROM valetudinarians a 
-                        LEFT JOIN (parties c, locations d) ON (a.party_id = c.id AND a.location_id = d.id)";*/
-             
-            $sql = "SELECT * FROM valetudinarians";
-            
-            $where = array();
-            if ($request->party_ID) {
-                $where[] = "party_id = $request->party_ID"; 
-            }
-            if ($request->location_ID) {
-                $where[] = "d.city_zip = $request->location_ID"; 
-            } elseif ($request->region) {
-                $where[] = "d.region = '$request->region'";
-            }
-            if ($request->search_Str) {
-                $where[] = "(first_name LIKE '%$request->search_Str%' OR
-                        last_name LIKE '%$request->search_Str%' OR
-                        occupation LIKE '%$request->search_Str%' OR
-                        position LIKE '%$request->search_Str%' OR 
-                        email LIKE '%$request->search_Str%')";
-            }
-
-            //$where_length = count($where);
-            foreach ($where as $key => $item) {
-                //$key = key($where);
-                if ($key == 0) {
-                    $sql .= " WHERE ";
-                } else {
-                    $sql .= " AND ";
-                }
-                $sql .= $item;
-            }                    
-                
-            $sql .= " ORDER BY id ASC"; // a.id if $sql demand !!!
-
-            $valetudinarians = DB::select($sql); 
-            //$valetudinarians = $this->paginateArray($valetudinarians, 7); // Paginate with 7 items per page;
-            //$valetudinarians = compact('valetudinarians');
-            $perPage = $this->my_PAGINATION_LIMIT;
-            $currentPage = $request->get('page', 1);
-
-            $currentItems = array_slice($valetudinarians, ($currentPage - 1) * $perPage, $perPage);
-
-            $paginatedData = new LengthAwarePaginator(
-                $currentItems,
-                count($valetudinarians),
-                $perPage,
-                $currentPage,
-                ['path' => request()->url()]
-            );
-
-            $paginatedData = $this->getColumnData($paginatedData);
-$endTime = microtime(true);
-$duration = round(($endTime - $startTime) * 1000, 2);
-Log::info("-Rote (Ajax-index) Transaction completed in {$duration}ms");        
-            $paginatedData->appends(request()->except('page'))->links(); //By using this, the generated pagination links will only include the 'page' parameter and any other parameters that were explicitly not excluded by except().
-            if ($request->party_ID) {
-                $paginatedData->appends(['party_ID' => $request->party_ID])->links();
-            }
-            if ($request->region) {
-                $paginatedData->appends(['region' => $request->region])->links();
-            }
-            if ($request->location_ID) {
-                $paginatedData->appends(['location_ID' => $request->location_ID])->links();
-            }
-            if ($request->search_Str) {
-                $paginatedData->appends(['search_Str' => $request->search_Str])->links();
-            }
-
-            if ((stripos($request->orgin_URI, 'equ') == false) && $request->orgin_URI) {    // orgin_URI is original page from where is
-                $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
-                $currentURL = $protocol . '://' . $_SERVER['HTTP_HOST'] . $request->orgin_URI;  // $_SERVER['REQUEST_URI'] change to orgin_URI
-                $paginatedData->setPath($currentURL);
-            }
-
-            // Append all current request parameters
-            //$paginatedData->appends(request()->input());
-            //$paginatedData->withQueryString();  //will intelligently handle the query parameters, preventing duplicates
-
-            if (auth()->user()) {
-                $user = auth()->user()->id;
-                //array_unshift($valetudinarians, $user);   //if array; place $user at first position
-                //$paginatedData->prepend($user);  //this adding +1 to $currentItems
-            } else {
-                $user = null;
-            }
-             //get Auth::user()->id to pass to ajax call
-            //$valetudinarians->push($user);   //place $user at last position
-            //$valetudinarians->prepend($user);   //if collection; place $uset at first position
-            
-            //if ($request->type == 'filter') {
-                //return response()->json($valetudinarians);
-                return response()->json([
-                    'user' => (integer) $user,
-                    'valetudinarians' => $paginatedData->items(),
-                    'links' => (string) $paginatedData->links() // Render pagination links as string
-                ]);
-            //}
-            /*if ($request->type == 'filter') {
-                return response()->json($equipments);
-            } elseif ($request->type == 'select-event') {
-                return response()->json(array($crud_event,$equipments));
-            }*/
-        }
-
-        //************non ajax call*****************************************************************
+        //************non & ajax call*****************************************************************
         $regions = Location::distinct()->get(['region']);
-        //$regions = Location::all()->unique('region');
         if ($request->region) {
-            $locations = Location::select(['city_zip as id', 'city_zip as zip', 'city as name'])
+            $cities = Location::select(['city_zip', 'city'])
             ->where('region', '=', $request->region)
             ->distinct()->get();
         } else {
-            $locations = Location::all();
+            $cities = Location::select(['city_zip', 'city'])->distinct()->get();
         }
         $parties = Party::all();
 
-        /*$valetudinarians = DB::table('valetudinarians')
-            ->leftjoin('parties', 'valetudinarians.party_id', '=', 'parties.id')
-            ->leftjoin('locations', 'valetudinarians.location_id', '=', 'locations.id')
-            //->leftjoin('images', 'valetudinarians.id', '=', 'images.valetudinarian_id')
-            ->select('valetudinarians.*', 'parties.name as party_name', 'locations.name as location_name')
-            ->paginate(config('constants.ROTE_PAGINATION_LIMIT'));   //->paginate(7);
+$paginated = PageView::orderBy('id', 'asc')->where('url', 'PAGINATED')->exists();
 
-        return view('rote.valetudinarian',['regions'=> $regions,
-                                    'locations'=> $locations,
-                                    'parties'=> $parties, 
-                                    'valetudinarians'=> $valetudinarians, 
-                                    'layout'=>'index']);*/     
-                
-        //$links = (string) $paginatedData->links();    //to print links html as a text
-        //$escapedHtml = htmlspecialchars($links);
-        //echo $escapedHtml;
-$startTime = microtime(true);
-        $val_paginatedData = $this->getPaginatedData($request, 'id'); // get DataSet and paginatedData 
-        $val_paginatedData = $this->getColumnData($val_paginatedData);
+        //$paginated = true;
+        $paginatedData = $this->dataService->getPaginatedData(NULL, $paginated, 'valetudinarians', $request);
+        //getPaginatedData($sql = NULL, $paginated = true, $source = 'valetudinarians', Request $request, 'a.id', 'ASC')
+        $paginatedData = $this->dataService->getImages($paginatedData, 'valetudinarian_id');
+        
+        $allRequestParams = $request->except(['_token', '_method']);
+        if (!empty($allRequestParams)) {
+            //set links and items selected for: 'party_ID', 'category_ID', 'region', 'location_ID', 'search_Str'
+            $UrlFiltersData = $this->dataService->fetchUrlFiltersData($paginatedData, $request);
+            $paginatedData = $UrlFiltersData['paginated_data'];
+            $drop_item_selected = $UrlFiltersData['drop_item_selected_filters'];
+        } else {
+            $drop_item_selected = null;
+        }
 
-        $val_paginatedData = $this->getImages($val_paginatedData, 'valetudinarian_id');
+        //***** ajax call ****
+        if($request->ajax()) {
+            switch ($request->type) {
+                case 'data-output':
+                    $paginatedData->setPath('/lustratio/public/equ');
+                    $valetudinarians = $paginatedData;
+                    $layout = 'index';
+                    $html = view('valetudinarianslist', compact('regions', 'cities', 'parties', 
+                                                                'valetudinarians', 'drop_item_selected', 'layout'))->render();
+                    // Return as JSON (so you can access it in AJAX success)
+                    return response()->json(['html' => $html]);
+                    
+                break;
+                case 'filter-js':
+                    $paginatedData->appends(request()->except('page'))->links(); //By using this, the generated pagination links will only include the 'page' parameter and any other parameters that were explicitly not excluded by except().
+
+                    if ((stripos($request->orgin_URI, 'equ') == false) && $request->orgin_URI) {    // orgin_URI is original page from where is
+                        $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+                        $currentURL = $protocol . '://' . $_SERVER['HTTP_HOST'] . $request->orgin_URI;  // $_SERVER['REQUEST_URI'] change to orgin_URI
+                        $paginatedData->setPath($currentURL);
+                    }
+
+                    if (auth()->user()) {
+                        $user = auth()->user()->id;
+                    } else {
+                        $user = null;
+                    }
+                    
 $endTime = microtime(true);
 $duration = round(($endTime - $startTime) * 1000, 2);
-Log::info("-Rote (index) Transaction completed in {$duration}ms");        
-        //$this->cleanParamsArray(); //clean from $_GET parametes
+Log::info("-Rote (Ajax-index) Transaction completed in {$duration}ms");
 
-        // Append all current request parameters
-        //$val_paginatedData->appends(request()->input());
-        //$val_paginatedData->withQueryString();  //will intelligently handle the query parameters, preventing duplicates
+                    return response()->json([
+                            'user' => (integer) $user,
+                            'valetudinarians' => $paginatedData->items(),
+                            'links' => (string) $paginatedData->links() // Render pagination links as string
+                    ]);
 
-        $drop_item_selected = collect(['party_ID' => null, 'location_ID' => null, 'search_Str' => null]);   //drop box item, if selected
-        if ($request->party_ID) {
-            $val_paginatedData->appends(['party_ID' => $request->party_ID])->links();   //ad html-<a> values to $paginatedData->link() 
-            $drop_item_selected->put('party_ID', $request->party_ID);
-            //$drop_item_selected->prepend($request->party_ID);   //if collection; place $uset at first position
-        }
-        if ($request->region) {
-            $val_paginatedData->appends(['region' => $request->region])->links();
-            $drop_item_selected->put('region', $request->region);
-        }
-        if ($request->location_ID) {
-            $val_paginatedData->appends(['location_ID' => $request->location_ID])->links();
-            $drop_item_selected->put('location_ID', $request->location_ID);
-        }
-        if ($request->search_Str) {
-            $val_paginatedData->appends(['search_Str' => $request->search_Str])->links();
-            $drop_item_selected->put('search_Str', $request->search_Str);
-        }
+                break;    
+                //default:
+                # ...
+                //break;
+            }
 
-            //$valetudinarians = $this->paginateArray($valetudinarians, 7); // Paginate with 7 items per page;
-            //$valetudinarians = compact('valetudinarians');
-            //$valetudinarians = compact((string) $paginatedData->links(), $valetudinarians);
-        
-        //$visitorCount = PageView::count();  //for page visits
-        //$visitorCnt = compact('visitorCount'); to be passed to view, to show visits counts (if we need it)
+        } else {
+                 
+$endTime = microtime(true);
+$duration = round(($endTime - $startTime) * 1000, 2);
+Log::info("-Rote (Non Ajax-index) Transaction completed in {$duration}ms");
 
-	 	return view('rote.valetudinarian',['regions'=> $regions,
-                                    'locations'=> $locations,
+            return view('valetudinarian',['regions'=> $regions,
+                                    'cities' => $cities,
+                                    //'locations'=> $locations,
                                     'parties'=> $parties, 
-                                    'valetudinarians'=> $val_paginatedData,
+                                    'valetudinarians'=> $paginatedData,
                                     'drop_item_selected'=> $drop_item_selected,
-                                    'layout'=>'index']);  
+                                    'layout'=> 'index']);
+            //************non ajax call End*************************************************************
+        }
     }
 
     /**
@@ -279,116 +187,386 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
     }*/
 
     /**
-     * get image_name to recordset.
+     * Show the form for creating a new resource from famous images.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function getImages($paginatedData, string $where_id_ref)
-    {
-        foreach ($paginatedData as $data) {
-            //$val->location_name = Locations::find($val->id)->name;
-            $image_data = My_Image::where($where_id_ref, $data->id)->first();
-            if ($image_data) {
-                $data->image_name = (string) $image_data->image_name;
-            } else {
-                $data->image_name = NULL;
-            }
-        }
-        return $paginatedData;
-    }
+    public function create_vale_event()       //add new vale and event (input for both at one page)
+    {   
+        if (session('showValetudinarianInfoModal') === null) {    
+            session(['showValetudinarianInfoModal' => true]);     //set to true, not set, show once 
+        } else {
+            session(['showValetudinarianInfoModal' => false]);
+        } 
+        //$parties = Party::all()->orderBy('name', 'asc')->lists('name','id');
+        $parties = Party::all(); 
+        $regions = Location::distinct()->get(['region']);
+        $locations = Location::all()->sortBy('name');
+        $categories = Category::all();
 
-    public function getColumnData($paginatedData)
-    {
-        foreach ($paginatedData as $data) {
-            if ($data->location_id) {
-                $column_data_l = Location::find($data->location_id)->name;
-                if ($column_data_l) {
-                    $data->location_name = (string) $column_data_l;
-                } else {
-                    $data->location_name = NULL;
-                }
-            } else {
-                $data->location_name = NULL;
-            }
-            
-            if ($data->party_id) {
-                $column_data_p = Party::find($data->party_id)->name;
-                if ($column_data_p) {
-                    $data->party_name = (string) $column_data_p;
-                } else {
-                    $data->party_name = NULL;
-                }
-            } else {
-                $data->party_name = NULL;
-            }       
-        }
-        return $paginatedData;
+        //$event_names = Event::get([  ]); //for linked the <input event_name> to the <datalist>
+        $occupations = Valetudinarian::distinct()->get(['occupation']); //linked the <input occupation> to the <datalist>
+
+	 	return view('vale_event_input',['parties'=> $parties,
+                                    'regions'=> $regions, 
+                                    'locations'=> $locations,
+                                    'categories' => $categories,
+                                    'occupations' => $occupations,
+                                    //'event_names' => $event_names, 
+                                    'layout'=>'create_vale_event']);
     }
 
     /**
-     * Get collection data base on criteria.
-     * @param request|Request $request
-     * @param str $order_by
-     * @param str $sorting_order ASC and DESC
-     * @return dataset $paginatedData
+     * Show the form for creating a new resource from famous images.
+     *
+     * @return \Illuminate\Http\Response
      */
-    public function getPaginatedData(Request $request, $order_by = NULL, $sorting_order = 'ASC')
-    {
-        if (!isset($this->my_PAGINATION_LIMIT)) {
-            if (session('my_dynamic_perpage_variable')) {
-                $this->my_PAGINATION_LIMIT = session('my_dynamic_perpage_variable');
-            } else {
-                $this->my_PAGINATION_LIMIT = config('constants.ROTE_PAGINATION_LIMIT');
-            }
-        }
+    public function make_famous($id)
+    {   
+        //$parties = Party::all()->orderBy('name', 'asc')->lists('name','id');
+        $parties = Party::all(); 
+        $regions = Location::distinct()->get(['region']);
+        $locations = Location::all()->sortBy('name');
+        $categories = Category::all();
+        $image_guess = ImageGuess::find($id);
+        $occupations = Valetudinarian::distinct()->get(['occupation']); //linked the <input occupation> to the <datalist>
+        //$desc = ImageGuess::find($id)->value('description');    //doesn't work with ->value('description'); part
+        //$desc = ImageGuess::where('id', $id)->value('description');
 
-        $sql = "SELECT * FROM valetudinarians";
-
-        $where = array();
-        if ($request->party_ID) {
-            $where[] = "party_id = $request->party_ID"; 
-        }
-        if ($request->location_ID) {
-            $where[] = "d.city_zip = $request->location_ID"; 
-        } elseif ($request->region) {
-            $where[] = "d.region = '$request->region'";
-        }
-        if ($request->search_Str) {
-            $where[] = "(first_name LIKE '%$request->search_Str%' OR
-                        last_name LIKE '%$request->search_Str%' OR
-                        occupation LIKE '%$request->search_Str%' OR
-                        position LIKE '%$request->search_Str%' OR 
-                        email LIKE '%$request->search_Str%')";
-            }
-
-        //$where_length = count($where);
-        foreach ($where as $key => $item) {
-            //$key = key($where);
-            if ($key == 0) {
-                $sql .= " WHERE ";
-            } else {
-                $sql .= " AND ";
-            }
-            $sql .= $item;
-        }                    
-                
-        if ($order_by) {
-            $sql .= " ORDER BY ".$order_by." ".$sorting_order; 
-        }
-
-        $valetudinarians = DB::select($sql);
-                   
-        $perPage = $this->my_PAGINATION_LIMIT;              //config('constants.ROTE_PAGINATION_LIMIT');
-        $currentPage = $request->get('page', 1);
-        $currentItems = array_slice($valetudinarians, ($currentPage - 1) * $perPage, $perPage);
-
-        $paginatedData = new LengthAwarePaginator(
-            $currentItems,
-            count($valetudinarians),
-            $perPage,
-            $currentPage,
-            ['path' => request()->url()]
-        );
-        return $paginatedData;
+	 	return view('vale_event_input',['parties'=> $parties,
+                                    'regions'=> $regions, 
+                                    'locations'=> $locations,
+                                    'categories' => $categories,
+                                    'occupations' => $occupations, 
+                                    'image_guess' => $image_guess,
+                                    'layout'=>'make_famous']);
     }
+
+    public function exist_event_input(Request $request)   //add-store new record vale and event (input for both at one page)
+    {
+        $regions = Location::distinct()->get(['region']);
+        $locations = Location::all();
+        //***** ajax call ****
+        if($request->ajax()) {
+            switch ($request->type) {
+                case 'data-event-main':     //when user choose "Choose Among Existing Events"
+                    $categories = Category::all();
+                    $events = Event::all();
+                    $layout = 'choose';
+                    $html = view('event_input-main', compact('categories', 'events', 'regions', 'locations', 'layout'))->render();
+
+                    // Return as JSON (so you can access it in AJAX success)
+                    return response()->json(['html' => $html]);
+                    
+                break;
+                case 'data-event-rest':
+                    $item_selected = Event::find($request->event_ID);
+                    $layout = 'show';       //when user choose an particular Event (get Event's Data) in "Choose Among Existing Events"
+                    $html = view('event_input-rest', compact('item_selected', 'layout'))->render();
+                    // Return as JSON (so you can access it in AJAX success)
+                    return response()->json(['html' => $html, 'item_selected' => $item_selected]);
+                    
+                break;
+                case 'data-event-combined':
+                    $categories = Category::all();
+                    $layout = 'create_vale_event';      //when user choose "New Event"
+                    $html_main = view('event_input-main', compact('categories', 'regions', 'locations', 'layout'))->render();
+                    $html_rest = view('event_input-rest', compact('layout'))->render();
+                    return response()->json([
+                        'html_main' => $html_main,
+                        'html_rest' => $html_rest
+                    ]);
+            }
+        }
+    }
+
+    /**
+     * Newly created store_val_event to store valetudinarians, events and make famous person (if os source request for store)
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store_val_event(Request $request)   //add-store new record vale and event (input for both at one page)
+    {    
+$startTime = microtime(true); 
+        //dd($request->all());
+        /************************************************************ Add Valetudinarian */   
+            $request->validate([
+                'first_name' => 'required|string',   //|unique:valetudinarians',
+                'last_name' => 'required|string',
+                'location_id' => 'required',
+                'party_id' => 'required',
+                //'date_of_birth' => [new UniquePerson],
+                // custom rule:
+                'date_of_birth' => [
+                    function ($attribute, $value, $fail) use ($request) {
+                        $exists = Valetudinarian::where('first_name', $request->first_name)
+                            ->where('last_name', $request->last_name)
+                            ->where('date_of_birth', $request->date_of_birth)
+                            ->exists();
+
+                        if ($exists) {
+                            $fail('The combination of first name, last name, and date of birth already exist. Please, check existing data for the person you wanna add (if, the other person exist and is not the same as your person, please, add the number next to the first name. Like "Marko 2" or "Marko II")');
+                        }
+                    },
+                ],
+            ]);
+
+            //if 'event_name' or 'description' is not filled then we consider that user don't want to add event part and will store just val part.
+            if (isset($request->event_id)) {
+                $event_id = (int)$request->event_id;
+            } elseif (($request->input('event_name') != NULL) || ($request->input('description') != NULL)) { 
+                $with_new_event = $request->validate([
+                    'category_id' => 'required',
+                    'event_name' => 'required|unique:events',
+                    'description' => 'required'/*,
+                    'location_id2' => [
+                        function ($attribute, $value, $fail) use ($request) {
+                            $exists = Event::where('event_name', $request->event_name)
+                                ->where('location_id', $request->location_id2)
+                                ->exists();
+
+                            if ($exists) {
+                                $fail('The combination of event name and location already exist. Please, check existing data for the Evant you wanna add (if, the Evant person exist and is not the same one, please, add the number next to the first name. Like "Incident Skupstina 2")');
+                            }
+                        },
+                    ],*/
+                ]);
+            }
+        
+            /*$description = $request->input('val_description');
+            if ($description) {
+                
+                // Regex pattern for standard URLs
+                $urlPattern = '/(https?:\/\/[^\s]+|www\.[^\s]+)/i';
+
+                // 1. Quick check: Only proceed if a URL is actually present
+                if (preg_match($urlPattern, $description)) {
+                    
+                    // 2. Perform the replacement to create <a> tags
+                    $description = preg_replace(
+                        $urlPattern, 
+                        '<a href="$1" target="_blank" class="text-primary">$1</a>', 
+                        $description
+                    );
+
+                    // 3. Fix links that start with "www." (missing protocol for the href)
+                    $description = str_replace('href="www.', 'href="http://www.', $description);
+                }
+            }*/
+
+            $valetudinarian = new Valetudinarian();
+            $valetudinarian->first_name = $request->input('first_name');
+            $valetudinarian->last_name = $request->input('last_name');
+            $valetudinarian->sobriquet = $request->input('sobriquet');
+            if ($request->input('date_of_birth')) {
+                $valetudinarian->date_of_birth = Carbon::parse($request->input('date_of_birth'))->toDateString();
+            }
+            $valetudinarian->occupation = $request->input('occupation');
+            $valetudinarian->position = $request->input('position');
+            $valetudinarian->email = $request->input('email');
+            
+            if ($request->input('phone')) {
+                $vale_phone = $request->input('phone');
+                $vale_phone = preg_replace("/[^0-9]/", "", $vale_phone);
+                $prefixToFind = "381";  //phone prefix for SRB
+                if ((strlen($vale_phone) > 10) && (strpos($vale_phone, $prefixToFind) === 0)) {
+                    $vale_phone = substr_replace($vale_phone, "0", 0, strlen($prefixToFind));
+                } 
+                $valetudinarian->phone = $vale_phone;
+            }
+            if ($request->input('local_id')) {
+                $location_id = (int)$request->input('local_id');
+            } elseif($request->input('location_id')) {
+                $location_id = (int)$request->input('location_id');
+            }
+            if ($location_id) {
+                $valetudinarian->location_id = $location_id;
+            }
+            $valetudinarian->party_id = (int)$request->input('party_id');
+            $valetudinarian->description = $request->input('val_description');  //$description;     //$request->input('val_description');
+            $valetudinarian->owner_id = auth()->user()->id;
+            $valetudinarian->save();
+
+            /******* Start images */
+            if($request->hasFile('image')) {
+
+                //dd($request->all());
+                $request->validate([
+                    'image' => 'required|mimes:jpg,png,jpeg|max:9048',  // was 5048KB = 5.048MB  
+                ]);
+                //if(!$request->file('image')->getError()) {}      //or $request->file('image')->getError()->isvalid()
+
+                $file_name_original_size = $valetudinarian->id . '-' . $request->image->getClientOriginalName();
+                //$imagePath = $request->image->store('public/vale_img');     //under root dir, name is made by image cls
+                $file_name = $valetudinarian->id . '.' . $request->image->extension();
+                $request->image->move(public_path('storage/vale_images'), $file_name_original_size);     //name is made by image cls
+
+                //*******resize file and delete original */
+                $source_file = public_path('storage/vale_images') . '/' . $file_name_original_size;
+                $destination_file = public_path('storage/vale_images') . '/' . $file_name;
+                // $max_width = 800; $max_height = 600;  $jpeg_quality = 85;
+                if ($this->resizeAndSaveImage($source_file, $destination_file)) {
+                    echo "Image resized and saved successfully to " . $destination_file;
+                    My_Image::create([   //you can use $car = Car::make([ insted but then you have to use $car->save(); before return redi...
+                        'valetudinarian_id' => $valetudinarian->id,
+                        'image_name' => $file_name
+                    ]);
+                } else {
+                    echo "Failed to resize image.";
+                }
+
+                //*******delete original */
+                if (file_exists($source_file)) { // Check if the file exists before attempting to delete
+                    if (unlink($source_file)) {
+                        echo "The file '{$source_file}' was successfully deleted.";
+                    } else {
+                        echo "Error: The file '{$source_file}' could not be deleted.";
+                    }
+                } else {
+                    echo "Error: The file '{$source_file}' does not exist.";
+                }
+            }
+            /******* End images */
+        /************************************************************ End Add Valetudinarian */
+        /************************************************************ Add Guess image */
+            if ($request->input('id_guess')) {
+                $image_guess = ImageGuess::find($request->input('id_guess'));
+                $image_guess_name = $image_guess->image_name;
+                $image_guess_extension = pathinfo($image_guess_name, PATHINFO_EXTENSION);
+
+                if (My_image::where('valetudinarian_id', $valetudinarian->id)->exists()) {
+                    //will never happen unless user just add new photo of subject, as well-othervise, the first is "guess" image and there is no any previous image of this subject.
+                    $file_name = Carbon::parse(time())->format('Ymd') . '-' . $valetudinarian->id . '-' . rand(100, 999) . '.' . $image_guess_extension;
+                } else {
+                    $file_name = $valetudinarian->id . '.' . $image_guess_extension;
+                }
+    
+                $source_file = public_path('storage/guess_images') . '/' . $image_guess_name;
+                if (file_exists($source_file)) { // Check if the file exists before attempting to delete
+                    
+                    // Ensure the destination folder exists, create it if it doesn't
+                    /*if (!is_dir(public_path('storage/vale_images'))) {
+                        echo "Error, there is no folder to move.";
+                    }*/
+
+                    // Construct the full path for the new file
+                    $destination_file = public_path('storage/vale_images') . '/' . $file_name;
+
+                    // Attempt to rename and move the file
+                    if (rename($source_file, $destination_file)) {
+                        echo "Image successfully renamed and moved to: " . $destination_file;
+                        My_Image::create([
+                            'valetudinarian_id' => $valetudinarian->id,
+                            'image_name' => $file_name
+                        ]);
+
+                        $event = ImageGuess::where('id', $request->input('id_guess'))->update([ 
+                                'valetudinarian_id' => $valetudinarian->id
+                        ]);
+                    } else {
+                        echo "Error renaming or moving the image.";
+                    }
+                    
+                } else {
+                    echo "Error: The file '{$source_file}' does not exist.";
+                }
+            }      
+
+        /************************************************************ End Add Guess image */
+        /************************************************************ Add Event */
+        
+        if (isset($with_new_event)) {
+
+            $category_id = 1;   // Default category OTHERS/OSTALO (has to make default in table)
+            if ($request->input('category_id') != NULL) { 
+                $category_id = (int)$request->input('category_id');
+            }
+
+            $location_id = 1;   //only event location. If not specifed then is 1 = Serbia.
+            if ($request->input('local_id2')) {
+                $location_id = $request->input('local_id2');
+            } elseif($request->input('location_id2')) {
+                $location_id = $request->input('location_id2');
+            }
+            $event_date = NULL;
+            if ($request->input('event_date')) {
+                $event_date = Carbon::parse($request->input('event_date'))->format('Y-m-d');
+            }
+            $event = Event::create([                
+                'event_name' => $request->input('event_name'),
+                'owner_id' => auth()->user()->id,
+                'event_date' => $event_date,
+                'location_id' => $location_id,
+                'description' => $request->input('description'),
+                'category_id' => $category_id
+            ]);
+            $event_id = $event->id;
+
+            /******** Start images */
+            if($request->hasFile('image2')) {
+
+                //dd($request->all());
+                $request->validate([
+                    'image2' => 'required|mimes:jpg,png,jpeg|max:9048',  // was 5048KB = 5.048MB  
+                ]);
+                //if(!$request->file('image')->getError()) {}      //or $request->file('image')->getError()->isvalid()
+
+                $file_name_original_size = $event->id . '-' . $request->image2->getClientOriginalName();
+                
+                $file_name = Carbon::parse(time())->format('Ymd') . '-' . $event->id . '-' . rand(100, 999) . '.' . $request->image2->getClientOriginalExtension();
+
+                $request->image2->move(public_path('storage/event_images'), $file_name_original_size);     //name is made by image cls
+
+                //*******resize file and delete original */
+                $source_file = public_path('storage/event_images') . '/' . $file_name_original_size;
+                $destination_file = public_path('storage/event_images') . '/' . $file_name;
+                // $max_width = 800; $max_height = 600;  $jpeg_quality = 85;
+                if ($this->resizeAndSaveImage($source_file, $destination_file)) {
+                    echo "Image resized and saved successfully to " . $destination_file;
+                    ImageEvent::create([
+                        'event_id' => $event->id,
+                        'image_name' => $file_name
+                    ]);
+                } else {
+                    echo "Failed to resize image.";
+                }
+
+                //*******delete original */
+                if (file_exists($source_file)) { // Check if the file exists before attempting to delete
+                    if (unlink($source_file)) {
+                        echo "The file '{$source_file}' was successfully deleted.";
+                    } else {
+                        echo "Error: The file '{$source_file}' could not be deleted.";
+                    }
+                } else {
+                    echo "Error: The file '{$source_file}' does not exist.";
+                }
+            }
+            /******* End images */
+        }
+
+$endTime = microtime(true);
+$duration = round(($endTime - $startTime) * 1000, 2);
+Log::info("-Rote (Non Ajax-store_val-event) Transaction completed in {$duration}ms");
+
+        if (isset($event_id)) {
+            //$valetudinarian_id = $request->input('valetudinarian_id');
+            if ($valetudinarian->id == NULL) {
+                return redirect('/create-valeevent/'.$event_id);    //Here is continuation for ref tables vale_events
+            } else {        //if we doing from start (whole input) from Vale-Event-ValeEvent
+                ValeEvent::create([   //you can use $equ_events = EquEvent::make([ insted but then you have to use $car->save(); before return redi...
+                    'event_id' => $event_id,
+                    'valetudinarian_id' => $valetudinarian->id
+                ]);
+            }
+        }
+        /************************************************************ End Add Event */
+
+        return redirect('/show/'.$valetudinarian->id);         //new vale input - all way around
+
+    }
+    /************************************************************************************************************************* End store ALL */
 
     /**
      * Show the form for creating a new resource.
@@ -397,52 +575,51 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
      */
     public function create(Request $request)
     {   
+        if (session('showValetudinarianInfoModal') === null) {    
+            session(['showValetudinarianInfoModal' => true]);     //set to true, not set, show once 
+        } else {
+            session(['showValetudinarianInfoModal' => false]);
+        } 
         //$parties = Party::all()->orderBy('name', 'asc')->lists('name','id');
         $parties = Party::all(); 
         $regions = Location::distinct()->get(['region']);
-        $locations = Location::all();
-        
+        $cities = Location::select(['city_zip', 'city'])->distinct()->get();
+        $locations = Location::all()->sortBy('name');
+        $occupations = Valetudinarian::distinct()->get(['occupation']);
+
         /*$valetudinarians = DB::table('valetudinarians')
             ->leftjoin('parties', 'valetudinarians.party_id', '=', 'parties.id')
             ->leftjoin('locations', 'valetudinarians.location_id', '=', 'locations.id')
             ->select('valetudinarians.*', 'parties.name as party_name', 'locations.name as location_name')
-            ->paginate(config('constants.ROTE_PAGINATION_LIMIT'));   //->paginate(7);
+            ->paginate(config('constants.PAGINATION_LIMIT'));   //->paginate(7);
             //->get();*/
 
-        $val_paginatedData = $this->getPaginatedData($request, 'id'); // get DataSet and paginatedData
-        $val_paginatedData = $this->getColumnData($val_paginatedData);
-        //$this->cleanParamsArray(); //clean from $_GET parametes
-
-        $drop_item_selected = collect(['party_ID' => null, 'region' => null, 'location_ID' => null, 'search_Str' => null]);
-        if ($request->party_ID) {
-            $val_paginatedData->appends(['party_ID' => $request->party_ID])->links();
-            $drop_item_selected->put('party_ID', $request->party_ID);
-            //$drop_item_selected->prepend($request->party_ID);   //if collection; place $uset at first position
-        }
-        if ($request->region) {
-            $val_paginatedData->appends(['region' => $request->region])->links();
-            $drop_item_selected->put('region', $request->region);
-        }
-        if ($request->location_ID) {
-            $val_paginatedData->appends(['location_ID' => $request->location_ID])->links();
-            $drop_item_selected->put('location_ID', $request->location_ID);
-        }
-        if ($request->search_Str) {
-            $val_paginatedData->appends(['search_Str' => $request->search_Str])->links();
-            $drop_item_selected->put('search_Str', $request->search_Str);
+        $paginated = true;
+        $paginatedData = $this->dataService->getPaginatedData(NULL, $paginated, 'valetudinarians', $request, 'a.id');
+        
+        $allRequestParams = $request->except(['_token', '_method']);
+        if (!empty($allRequestParams)) {
+            //set links and items selected for: 'party_ID', 'category_ID', 'region', 'location_ID', 'search_Str'
+            $UrlFiltersData = $this->dataService->fetchUrlFiltersData($paginatedData, $request);
+            $paginatedData = $UrlFiltersData['paginated_data'];
+            $drop_item_selected = $UrlFiltersData['drop_item_selected_filters'];
+        } else {
+            $drop_item_selected = null;
         }
 
-	 	return view('rote.valetudinarian',['valetudinarians'=> $val_paginatedData, 
+	 	return view('valetudinarian',['valetudinarians'=> $paginatedData, 
                                     'drop_item_selected'=> $drop_item_selected,
                                     'parties'=> $parties,
-                                    'regions'=> $regions, 
-                                    'locations'=> $locations, 
+                                    'regions'=> $regions,
+                                    'cities' => $cities,
+                                    'locations'=> $locations,
+                                    'occupations' => $occupations, 
                                     'layout'=>'create']);
     }
 
     public function upload_image($id)
     {   
-	 	return view('image_upload',['id'=> $id, 'layout'=>'image_upload']);  
+	 	return view('image_upload',['id'=> $id, 'layout'=>'image_upload', 'image_type'=>'valetudinarian']);  
     }
 
     public function store_image(Request $request)
@@ -456,12 +633,12 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
         if($request->hasFile('image')) {
             $image = $request->file('image');
             //$image_name = $request->file('image')->getClientOriginalName();
-            $file_name_original_size = $request->vale_id . '-' . $image->getClientOriginalName();
+            $file_name_original_size = $request->parent_id . '-' . $image->getClientOriginalName();
 
-            if (My_image::where('valetudinarian_id', $request->vale_id)->exists()) {
-                $file_name = Carbon::parse(time())->format('Ymd') . '-' . $request->vale_id . '-' . rand(100, 999) . '.' . $image->getClientOriginalExtension();
+            if (My_image::where('valetudinarian_id', $request->parent_id)->exists()) {
+                $file_name = Carbon::parse(time())->format('Ymd') . '-' . $request->parent_id . '-' . rand(100, 999) . '.' . $image->getClientOriginalExtension();
             } else {
-                $file_name = $request->vale_id . '.' . $image->getClientOriginalExtension();
+                $file_name = $request->parent_id . '.' . $image->getClientOriginalExtension();
             }
 
             //$imagePath = $request->image->store('public/storage/vale_images');     //under root dir, name is made by image cls
@@ -476,8 +653,8 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
             //if ($this->resizeAndSaveImage($source_file, $destination_file, $max_width, $max_height, $jpeg_quality)) {
             if ($this->resizeAndSaveImage($source_file, $destination_file)) {
                 echo "Image resized and saved successfully to " . $destination_file;
-                $valetudinarian = My_Image::create([   //you can use $car = Car::make([ insted but then you have to use $car->save(); before return redi...
-                    'valetudinarian_id' => $request->vale_id,
+                My_Image::create([   //you can use $car = Car::make([ insted but then you have to use $car->save(); before return redi...
+                    'valetudinarian_id' => $request->parent_id,
                     'image_name' => $file_name
                 ]);
             } else {
@@ -497,7 +674,7 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
         }
 
         //return response()->json([])->with('success', 'Image uploaded successfully.');
-        return redirect('/rote_show/'.$request->vale_id)->with('success', 'Image uploaded successfully.');
+        return redirect('/show/'.$request->parent_id)->with('success', 'Image uploaded successfully.');
     }
 
     /**
@@ -508,13 +685,29 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
      */
     public function store(Request $request)
     {
+$startTime = microtime(true);        
         //$validatedData = $request->validate([
         $request->validate([
             //'name' => new Uppercase,  // check field for uppercase tostrupper()
-            'first_name' => 'required|unique:valetudinarians',
-            'last_name' => 'required',
+            //'first_name'    => ['required', 'string', new UniquePerson()],
+            'first_name' => 'required|string',   //|unique:valetudinarians',
+            'last_name' => 'required|string',
             'location_id' => 'required',
             'party_id' => 'required',
+            //'date_of_birth' => [new UniquePerson],
+            // custom rule:
+            'date_of_birth' => [
+                function ($attribute, $value, $fail) use ($request) {
+                    $exists = Valetudinarian::where('first_name', $request->first_name)
+                        ->where('last_name', $request->last_name)
+                        ->where('date_of_birth', $request->date_of_birth)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('The combination of first name, last name, and date of birth already exist. Please, check existing data for the person you wanna add (if, the other person exist and is not the same as your person, please, add the number next to the first name. Like "Marko 2" or "Marko II")');
+                    }
+                },
+            ],
         ]);
 
         $valetudinarian = new Valetudinarian();
@@ -522,23 +715,38 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
         $valetudinarian->last_name = $request->input('last_name');
         $valetudinarian->sobriquet = $request->input('sobriquet');
         //$valetudinarian->date_of_birth = Carbon::parse($request->input('date_of_birth'))->format('Y-m-d H:i:s');
-        $valetudinarian->date_of_birth = Carbon::parse($request->input('date_of_birth'))->toDateString();
+        if ($request->input('date_of_birth')) {
+            $valetudinarian->date_of_birth = Carbon::parse($request->input('date_of_birth'))->toDateString();
+        }
         //$valetudinarian->date_of_birth = $request->input('date_of_birth');
-        $valetudinarian->occupation = $request->input('occupation');
+        $valetudinarian->occupation = strtoupper($request->input('occupation'));
         $valetudinarian->position = $request->input('position');
         $valetudinarian->email = $request->input('email');
-        $valetudinarian->phone = $request->input('phone');
+        
+        if ($request->input('phone')) {
+            $vale_phone = $request->input('phone');
+            $vale_phone = preg_replace("/[^0-9]/", "", $vale_phone);
+            $prefixToFind = "381";  //phone prefix for SRB
+            if ((strlen($vale_phone) > 10) && (strpos($vale_phone, $prefixToFind) === 0)) {
+                $vale_phone = substr_replace($vale_phone, "0", 0, strlen($prefixToFind));
+            } 
+            $valetudinarian->phone = $vale_phone;
+        }
         //LU$valetudinarian->image_path = $request->input('image_path');
         if ($request->input('local_id')) {
-            $valetudinarian->location_id = $request->input('local_id');
+            $location_id = (int)$request->input('local_id');
         } elseif($request->input('location_id')) {
-            $valetudinarian->location_id = $request->input('location_id');
+            $location_id = (int)$request->input('location_id');
         }
-        $valetudinarian->location_id = $request->input('location_id');
-        $valetudinarian->party_id = $request->input('party_id');
+        if ($location_id) {
+            $valetudinarian->location_id = $location_id;
+        }
+        $valetudinarian->party_id = (int)$request->input('party_id');
+        $valetudinarian->description = $request->input('val_description');
         $valetudinarian->owner_id = auth()->user()->id;
         $valetudinarian->save();
 
+        /*************************************************** Start images */
         if($request->hasFile('image')) {
 
             //dd($request->all());
@@ -577,18 +785,13 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
                 echo "Error: The file '{$source_file}' does not exist.";
             }
         }
+        /************************************************************ End images */
 
-        /*$car = Equipment::create([   //you can use $car = Car::make([ insted but then you have to use $car->save(); before return redi...
-            'name' => $request->input('name'),
-            'brand' => $request->input('brand'),
-            'model' => $request->input('model'),
-            'serial_number' => $request->input('serial_number'),
-            'price' => $request->input('price'),
-            'availability' => $request->input('availability'),
-            'image_path' => $request->input('image_path')
-        ]);*/
+$endTime = microtime(true);
+$duration = round(($endTime - $startTime) * 1000, 2);
+Log::info("-Rote (Non Ajax-store) Transaction completed in {$duration}ms");
 
-        return redirect('/create-event-vale-event/'.$valetudinarian->id);
+        return redirect('/create-event-vale-event/'.$valetudinarian->id); //go to EventController-create_event_valeid($id)-'param' => 1
         //return redirect('/create-event-valeevent/'.$valetudinarian->id);            //call to continue event 
         return redirect('/create');         //new vale input - all way around
 
@@ -602,16 +805,21 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
      */
     public function show($id)
     {
-        $valetudinarian = Valetudinarian::find($id);
-        $party = Party::find($valetudinarian->party_id);
-        $location = Location::find($valetudinarian->location_id);
+$startTime = microtime(true);
+        $item_selected = Valetudinarian::find($id);
+        $party = Party::find($item_selected->party_id);
+        $location = Location::find($item_selected->location_id);
         
-        $events = DB::table('events')->where('vale_events.valetudinarian_id', '=', $id)
+        $rawEvents = DB::table('events')->where('vale_events.valetudinarian_id', '=', $id)
             ->join('vale_events', 'events.id', '=', 'vale_events.event_id')
             ->leftjoin('categories', 'events.category_id', '=', 'categories.id')
             ->leftjoin('locations', 'events.location_id', '=', 'locations.id')
             ->select('events.*', 'categories.category_name', 'locations.zip', 'locations.name')
             ->get();
+
+        // Convert generic objects into Valetudinarian Models
+        $events = \App\Models\Valetudinarian::hydrate($rawEvents->toArray());
+
         //$images = Image::find($id);
         $images = DB::table('images')->where('valetudinarian_id', '=', $id)->get();
         /*$store_category = DB::table('equipments')
@@ -624,9 +832,21 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
         //dd($valetudinarians); //LU
         //dd($valetudinarian->party); //LU
         //dd($equipment->location);
+        $regions = Location::distinct()->get(['region']);
+        $locations = Location::all()->sortBy('name');
+        $parties = Party::all();
+        $layout = 'show'; // or 'edit', depending
 
-	 	return view('rote.valetudinarian_show',['valetudinarian'=> $valetudinarian, 'party' => $party, 'location' => $location, 
-                                            'events' => $events, 'images' => $images, 'layout'=>'show']);  
+$endTime = microtime(true);
+$duration = round(($endTime - $startTime) * 1000, 2);
+Log::info("-Rote (Non Ajax-show) Transaction completed in {$duration}ms");
+
+        return view('valetudinarian_show', compact('item_selected', 'party', 'location', 
+                                'events', 'images', 'regions', 'locations', 'parties', 'layout'));
+
+	 	/*return view('valetudinarian_show',['item_selected' => $item_selected, 'party' => $party, 'location' => $location, 
+                                            'events' => $events, 'images' => $images, 'layout'=> $layout,
+                                        'regions' => $regions, 'locations' => $locations, 'parties'=> $parties]); */
     }
 
     /**
@@ -637,9 +857,12 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
      */
     public function edit(Request $request, $id)
     {
+$startTime = microtime(true);
         $regions = Location::distinct()->get(['region']);
-        $locations = Location::all(); 
+        $cities = Location::select(['city_zip', 'city'])->distinct()->get();
+        $locations = Location::all()->sortBy('name'); 
         $parties = Party::all(); 
+        $occupations = Valetudinarian::distinct()->get(['occupation']);
 
         $item_selected = Valetudinarian::find($id);
         
@@ -647,36 +870,34 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
             ->leftjoin('parties', 'valetudinarians.party_id', '=', 'parties.id')
             ->leftjoin('locations', 'valetudinarians.location_id', '=', 'locations.id')
             ->select('valetudinarians.*', 'parties.name as party_name', 'locations.name as location_name')
-            ->paginate(config('constants.ROTE_PAGINATION_LIMIT'));   //->paginate(7);
+            ->paginate(config('constants.PAGINATION_LIMIT'));   //->paginate(7);
             //->get();*/
 
-        $val_paginatedData = $this->getPaginatedData($request, 'a.id'); // get DataSet and paginatedData
-        //$this->cleanParamsArray(); //clean from $_GET parametes
+        $paginated = true;
+        $paginatedData = $this->dataService->getPaginatedData(NULL, $paginated, 'valetudinarians', $request, 'a.id');
+        
+        $allRequestParams = $request->except(['_token', '_method']);
+        if (!empty($allRequestParams)) {
+            //set links and items selected for: 'party_ID', 'category_ID', 'region', 'location_ID', 'search_Str'
+            $UrlFiltersData = $this->dataService->fetchUrlFiltersData($paginatedData, $request);
+            $paginatedData = $UrlFiltersData['paginated_data'];
+            $drop_item_selected = $UrlFiltersData['drop_item_selected_filters'];
+        } else {
+            $drop_item_selected = null;
+        }
 
-        $drop_item_selected = collect(['party_ID' => null, 'region' => null, 'location_ID' => null, 'search_Str' => null]);
-        if ($request->party_ID) {
-            $val_paginatedData->appends(['party_ID' => $request->party_ID])->links();
-            $drop_item_selected->put('party_ID', $request->party_ID);
-        }
-        if ($request->region) {
-            $val_paginatedData->appends(['region' => $request->region])->links();
-            $drop_item_selected->put('region', $request->region);
-        }
-        if ($request->location_ID) {
-            $val_paginatedData->appends(['location_ID' => $request->location_ID])->links();
-            $drop_item_selected->put('location_ID', $request->location_ID);
-        }
-        if ($request->search_Str) {
-            $val_paginatedData->appends(['search_Str' => $request->search_Str])->links();
-            $drop_item_selected->put('search_Str', $request->search_Str);
-        }
-            
-	 	return view('rote.valetudinarian',['valetudinarians'=> $val_paginatedData,
+$endTime = microtime(true);
+$duration = round(($endTime - $startTime) * 1000, 2);
+Log::info("-Rote (Non Ajax-edit) Transaction completed in {$duration}ms");
+
+	 	return view('valetudinarian',['valetudinarians'=> $paginatedData,
                                     'drop_item_selected'=> $drop_item_selected,
                                     'item_selected'=> $item_selected, 
                                     'parties'=> $parties,
-                                    'regions'=> $regions, 
-                                    'locations'=> $locations, 
+                                    'regions'=> $regions,
+                                    'cities' => $cities,
+                                    'locations'=> $locations,
+                                    'occupations' => $occupations,
                                     'layout'=>'edit']);
     }
 
@@ -689,43 +910,74 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
      */
     public function update(Request $request, $id)
     {
+$startTime = microtime(true);
         $request->validate([
-            'first_name' => 'required',
-            'last_name' => 'required',
+            'first_name'    => ['required', 'string', new UniquePerson($id)],
+            //'first_name' => 'required',
+            'last_name' => 'required|string',
             'location_id' => 'required',
             'party_id' => 'required',
         ]);
 
         $valetudinarian = Valetudinarian::find($id);
-        $valetudinarian->first_name = $request->input('first_name');
-        $valetudinarian->last_name = $request->input('last_name');
-        $valetudinarian->sobriquet = $request->input('sobriquet');
-        $valetudinarian->date_of_birth = $request->input('date_of_birth');
-        $valetudinarian->occupation = $request->input('occupation');
-        $valetudinarian->position = $request->input('position');
-        $valetudinarian->email = $request->input('email');
-        $valetudinarian->phone = $request->input('phone');
-        //LU$valetudinarian->image_path = $request->input('image_path');
-        if ($request->input('local_id')) {
-            $valetudinarian->location_id = $request->input('local_id');
-        } elseif($request->input('location_id')) {
-            $valetudinarian->location_id = $request->input('location_id');
-        }
-        $valetudinarian->party_id = $request->input('party_id');
-        $valetudinarian->save();
-    
-        /*$equipment = Equipment::where('id', $id)
-            ->update([   
-                'name' => $request->input('name'),
-                'brand' => $request->input('brand'),
-                'model' => $request->input('model'),
-                'serial_number' => $request->input('serial_number'),
-                'price' => $request->input('price'),
-                'availability' => $request->input('availability'),
-                'image_path' => $request->input('image_path')
-        ]);*/
         
-        return redirect('/rote');
+        if ($request->filled('first_name') && ($valetudinarian->first_name !== $request->input('first_name'))) {
+            $valetudinarian->first_name = $request->input('first_name');
+        }
+        if ($request->filled('last_name') && ($valetudinarian->last_name !== $request->input('last_name'))) {
+            $valetudinarian->last_name = $request->input('last_name');
+        }
+        if ($request->filled('sobriquet') && ($valetudinarian->sobriquet !== $request->input('sobriquet'))) {
+            $valetudinarian->sobriquet = $request->input('sobriquet');
+        }
+        if ($request->filled('date_of_birth') && ($valetudinarian->date_of_birth !== $request->input('date_of_birth'))) {
+            $valetudinarian->date_of_birth = Carbon::parse($request->input('date_of_birth'))->toDateString();
+        }
+        if ($request->filled('occupation') && ($valetudinarian->occupation !== strtoupper($request->input('occupation')))) {
+            $valetudinarian->occupation = strtoupper($request->input('occupation'));
+        }
+        if ($request->filled('position') && ($valetudinarian->position !== $request->input('position'))) {
+            $valetudinarian->position = $request->input('position');
+        }
+        if ($request->filled('email') && ($valetudinarian->email !== $request->input('email'))) {
+            $valetudinarian->email = $request->input('email');
+        }
+
+        if ($request->filled('phone') && ($valetudinarian->phone !== $request->input('phone')) && (strpos($request->input('phone'), '***') === false)) {
+            $vale_phone = $request->input('phone');
+            $vale_phone = preg_replace("/[^0-9]/", "", $vale_phone);
+            $prefixToFind = "381";  //phone prefix for SRB
+            if ((strlen($vale_phone) > 10) && (strpos($vale_phone, $prefixToFind) === 0)) {
+                $vale_phone = substr_replace($vale_phone, "0", 0, strlen($prefixToFind));
+            }
+            if ($valetudinarian->phone !== $vale_phone) {
+                $valetudinarian->phone = $vale_phone;
+            }
+        }
+        
+        if ($request->input('local_id')) {
+            $location_id = (int)$request->input('local_id');
+        } elseif($request->input('location_id')) {
+            $location_id = (int)$request->input('location_id');
+        }
+        if ($location_id && ($valetudinarian->location_id !== $location_id)) {
+            $valetudinarian->location_id = $location_id;
+        }
+        
+        if ($request->filled('party_id') && ($valetudinarian->party_id !== (int)$request->input('party_id'))) {
+            $valetudinarian->party_id = (int)$request->input('party_id');
+        }
+        if ($request->filled('val_description') && ($valetudinarian->description !== $request->input('val_description'))) {
+            $valetudinarian->description = $request->input('val_description');
+        }
+        $valetudinarian->save();
+
+$endTime = microtime(true);
+$duration = round(($endTime - $startTime) * 1000, 2);
+Log::info("-Rote (Non Ajax-update) Transaction completed in {$duration}ms");
+
+        $currentPage = $request->get('page', 1);
+        return redirect('/equ?page='.$currentPage); //LU to be FIX
     }
 
     /**
@@ -739,14 +991,112 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
     {
         $valetudinarian = Valetudinarian::find($id);
         $valetudinarian->delete();
-        return redirect('/rote');
+        return redirect('/equ');
     }
+
+    public function store_correction(Request $request)
+    {        
+        //No real Validations requied for the correction or additional data
+        $request->validate([
+            'valetudinarian_id' => 'required',
+        ]);
+
+        $item_selected = Valetudinarian::find($request->input('valetudinarian_id'));
+        
+        $vale_corr = new Correction();
+        if ($request->filled('first_name') && ($item_selected->first_name !== $request->input('first_name'))) {
+            $vale_corr->first_name = $request->input('first_name');
+        }
+        if ($request->filled('last_name') && ($item_selected->last_name !== $request->input('last_name'))) {
+            $vale_corr->last_name = $request->input('last_name');
+        }
+        if ($request->filled('sobriquet') && ($item_selected->sobriquet !== $request->input('sobriquet'))) {
+            $vale_corr->sobriquet = $request->input('sobriquet');
+        }
+        if ($request->filled('date_of_birth') && ($item_selected->date_of_birth !== $request->input('date_of_birth'))) {
+            $vale_corr->date_of_birth = Carbon::parse($request->input('date_of_birth'))->toDateString();
+        }
+        if ($request->filled('occupation') && ($item_selected->occupation !== strtoupper($request->input('occupation')))) {
+            $vale_corr->occupation = strtoupper($request->input('occupation'));
+        }
+        if ($request->filled('position') && ($item_selected->position !== $request->input('position'))) {
+            $vale_corr->position = $request->input('position');
+        }
+        if ($request->filled('email') && ($item_selected->email !== $request->input('email'))) {
+            $vale_corr->email = $request->input('email');
+        }
+        if ($request->filled('phone') && ($item_selected->phone !== $request->input('phone')) && (strpos($request->input('phone'), '***') === false)) {
+            $vale_phone = $request->input('phone');
+            $vale_phone = preg_replace("/[^0-9]/", "", $vale_phone);
+            $prefixToFind = "381";  //phone prefix for SRB
+            if ((strlen($vale_phone) > 10) && (strpos($vale_phone, $prefixToFind) === 0)) {
+                $vale_phone = substr_replace($vale_phone, "0", 0, strlen($prefixToFind));
+            }
+            if ($item_selected->phone !== $vale_phone) {
+                $vale_corr->phone = $vale_phone;
+            }
+        }
+        if ($request->input('local_id')) {
+            $location_id = (int)$request->input('local_id');
+        } elseif($request->input('location_id')) {
+            $location_id = (int)$request->input('location_id');
+        }
+        if ($location_id && ($item_selected->location_id !== $location_id)) {
+            $vale_corr->location_id = $location_id;
+        }
+        if ($request->filled('party_id') && ($item_selected->party_id !== (int)$request->input('party_id'))) {
+            $vale_corr->party_id = (int)$request->input('party_id');
+        }
+        if ($vale_corr->isDirty()) {
+            $vale_corr->valetudinarian_id = (int)$request->input('valetudinarian_id');
+            if ($request->filled('comment')) {
+                $vale_corr->comment = $request->input('comment');
+            }
+            $vale_corr->owner_id = auth()->user()->id;
+            $vale_corr->save();
+            return redirect()->back()->with('success', 'Action completed successfully!');
+        } else {
+            //return redirect()->back()->withErrors(['msg' => 'There is no new data or corrections!']);
+            return redirect()->back()->with('error', 'Data are same! There is no new data or corrections!');
+        }
+    }
+
+    /*public function post_ajax_data(Request $request)
+    {
+        switch ($request->type) {
+            case 'data-for-correction':
+                if($request->ajax()) {  
+
+                    $regions = Location::distinct()->get(['region']);
+                    //$cities = Location::select(['city_zip', 'city'])->distinct()->get();
+                    $locations = Location::all()->sortBy('name');
+
+                    $item_selected = Valetudinarian::find($request->ID);
+                    // If needed, pass any other contextual variables
+                    if($item_selected->location_id) {
+                        $layout = 'edit'; 
+                    } else {
+                        $layout = 'create';
+                    }
+
+                    $html = view('location_list-template', compact('regions', 'locations', 'layout', 'item_selected'))->render();
+
+                    // Return as JSON (so you can access it in AJAX success)
+                    return response()->json(['html' => $html]);
+                   
+                } 
+            break;
+             
+            default:
+             # ...
+            break;
+        }
+    }*/
 
     public function valeventEvents(Request $request)
     {
- 
         switch ($request->type) {
-            case 'search':
+            case 'search':  //obsolete
                 if($request->ajax()) { 
                 // Search in the title and body columns from the posts table
                     if ($request->search_Str) {
@@ -818,7 +1168,8 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
         }
     }
 
-    public function resizeAndSaveImage($source_file, $destination_path, $max_width = 800, $max_height = 600, $quality = 85) {
+    public function resizeAndSaveImage($source_file, $destination_path, $max_width = 800, $max_height = 600, $quality = 85) 
+    {
         // $max_width = 800; $max_height = 600;  $jpeg_quality = 85;
         // Get the image data from the URL
         $image_data = file_get_contents($source_file);
@@ -897,185 +1248,5 @@ Log::info("-Rote (index) Transaction completed in {$duration}ms");
         }
         //$queryParamsArray = $_GET;
     }
-
-    /*********************** DER ROTE */
-    /******************************** */
-    function generateRandomStringWithCapitalFirst(int $length = 10, $notCapital = false): string
-    {
-        //$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $characters = 'abcdefghijklmnopqrstuvwxyz';
-        $randomString = '';
-
-        // Generate the random string
-        for ($i = 0; $i < $length; $i++) {
-            $index = random_int(0, strlen($characters) - 1);
-            $randomString .= $characters[$index];
-        }
-
-        if (!$notCapital) {
-            // Capitalize the first character
-            return ucfirst($randomString);
-        } else {
-            return $randomString;
-        }
-    }
-
-    function getRandomDateBetween($startDate, $endDate, $format = 'Y-m-d') {
-        // Convert start and end dates to Unix timestamps
-        $startTimestamp = strtotime($startDate);
-        $endTimestamp = strtotime($endDate);
-
-        // Generate a random timestamp within the range
-        $randomTimestamp = mt_rand($startTimestamp, $endTimestamp);
-
-        // Convert the random timestamp back to a formatted date
-        return date($format, $randomTimestamp);
-    }
-
-    public function fill_val_withDummyData($maxLoop = 2)
-    {
-        $owner_id_set = [1, 2, 14, 26, 31, 32, 36, 43, 44, 45, 46, 49, 51, 52, 53];
-        $location_id_set = [11000, 21000, 11010, 12223, 25250, 11050, 25230, 23213, 11000, 21000, 18000, 
-                            11500, 23000, 11000, 18000, 19000, 23300, 31000, 32000, 34000, 35000, 36000, 36300, 37000, 25000];
-        $min = 10000000; // Smallest 8-digit number
-        $max = 99999999; // Largest 8-digit number
-
-        for ($i = 1; $i <= $maxLoop; $i++) {
-
-            $email = NULL;
-            $phone = NULL;
-        
-            $valetudinarian = new Valetudinarian();
-            $valetudinarian->first_name = $this->generateRandomStringWithCapitalFirst(rand(4, 10));
-            $valetudinarian->last_name = $this->generateRandomStringWithCapitalFirst(rand(7, 14));
-            $valetudinarian->sobriquet = '';
-            $valetudinarian->date_of_birth = $this->getRandomDateBetween('1937-01-01', '2008-09-30');
-            //$valetudinarian->date_of_birth = 'date_of_birth';
-            $valetudinarian->occupation = null;
-            $valetudinarian->position = null;
-            
-            if (rand(1, 7) == 7) {
-                $email = $this->generateRandomStringWithCapitalFirst(rand(4, 7), true) . '@gmail.com';
-            } elseif(rand(1, 10) == 7) {
-                $phone = '06' . rand($min, $max);;
-            }
-            $valetudinarian->email = $email;
-            $valetudinarian->phone = $phone;
-            
-            $random_key = array_rand($location_id_set);
-            $valetudinarian->location_id = $location_id_set[$random_key];
-            
-            $valetudinarian->party_id = random_int(1, 7);
-            
-            $random_key = array_rand($owner_id_set);
-            $valetudinarian->owner_id = $owner_id_set[$random_key]; //auth()->user()->id;
-            $valetudinarian->save();
-           
-        }   
-
-        return true;
-    }
-
-    public function unlimit(Request $request)
-    {
-        //$this->fill_val_withDummyData(1500);
-
-        if($request->ajax()) { 
-
-$startTime = microtime(true);
-            $sql = "SELECT DISTINCT a.*, c.name AS party_name, d.name AS location_name
-                        FROM valetudinarians a 
-                        LEFT JOIN (parties c, locations d) ON (a.party_id = c.id AND a.location_id = d.id)";
-            
-            $where = array();
-            if ($request->party_ID) {
-                $where[] = "a.party_id = $request->party_ID"; 
-            }
-            if ($request->location_ID) {
-                $where[] = "d.city_zip = $request->location_ID"; 
-            } elseif ($request->region) {
-                $where[] = "d.region = '$request->region'";
-            }
-            if ($request->search_Str) {
-                $where[] = "(a.first_name LIKE '%$request->search_Str%' OR
-                        a.last_name LIKE '%$request->search_Str%' OR
-                        a.occupation LIKE '%$request->search_Str%' OR
-                        a.position LIKE '%$request->search_Str%' OR 
-                        a.email LIKE '%$request->search_Str%')";
-            }
-
-            //$where_length = count($where);
-            foreach ($where as $key => $item) {
-                //$key = key($where);
-                if ($key == 0) {
-                    $sql .= " WHERE ";
-                } else {
-                    $sql .= " AND ";
-                }
-                $sql .= $item;
-            }                    
-                
-            $sql .= " ORDER BY a.id ASC";
-
-            $valetudinarians = DB::select($sql); 
-            
-$endTime = microtime(true);
-$duration = round(($endTime - $startTime) * 1000, 2);
-Log::info("-Rote unlimit (Ajax-index) Transaction completed in {$duration}ms");        
-
-            if (auth()->user()) {
-                $user = auth()->user()->id;
-            } else {
-                $user = null;
-            }
-            
-            $paginatedData = $valetudinarians;
-                return response()->json([
-                    'user' => (integer) $user,
-                    'valetudinarians' => $paginatedData,
-                    'links' => '' // Render pagination links as string
-                ]);
-        }
-
-        //************non ajax call*****************************************************************
-        $regions = Location::distinct()->get(['region']);
-        //$regions = Location::all()->unique('region');
-        if ($request->region) {
-            $locations = Location::select(['city_zip as id', 'city_zip as zip', 'city as name'])
-            ->where('region', '=', $request->region)
-            ->distinct()->get();
-        } else {
-            $locations = Location::all();
-        }
-        $parties = Party::all();
-$startTime = microtime(true);
-        $valetudinarians = DB::table('valetudinarians')
-            ->leftjoin('parties', 'valetudinarians.party_id', '=', 'parties.id')
-            ->leftjoin('locations', 'valetudinarians.location_id', '=', 'locations.id')
-            //->leftjoin('images', 'valetudinarians.id', '=', 'images.valetudinarian_id')
-            ->select('valetudinarians.*', 'parties.name as party_name', 'locations.name as location_name')
-            ->get();
-
-        /*return view('rote.valetudinarian',['regions'=> $regions,
-                                    'locations'=> $locations,
-                                    'parties'=> $parties, 
-                                    'valetudinarians'=> $valetudinarians, 
-                                    'layout'=>'index']);   */
-
-$endTime = microtime(true);
-$duration = round(($endTime - $startTime) * 1000, 2);
-Log::info("-Rote unlimit join (index) Transaction completed in {$duration}ms");        
-
-        $drop_item_selected = collect(['party_ID' => null, 'region' => null, 'location_ID' => null, 'search_Str' => null]);   //drop box item, if selected
-
-        $val_paginatedData = $valetudinarians;
-	 	return view('rote.valetudinarian',['regions'=> $regions,
-                                    'locations'=> $locations,
-                                    'parties'=> $parties, 
-                                    'valetudinarians'=> $val_paginatedData,
-                                    'drop_item_selected'=> $drop_item_selected,
-                                    'layout'=>'unlimit']);  
-    }
-
-
+    
 }

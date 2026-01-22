@@ -15,7 +15,7 @@
                     <!--form method="POST" action="{-{ route('register') }}">
                         @-csrf-->
                         <div class="form-group row">
-                            <label for="username" class="col-md-4 col-form-label text-md-right">{{ __('Name') }}</label>
+                            <label for="username" class="col-md-4 col-form-label text-md-right">{{ __('Name') }} <span class="mandatory-star-label">*</span></label>
 
                             <div class="col-md-6">
                                 <input id="username" type="text" class="form-control @error('username') is-invalid @enderror" name="username" value="{{ old('username') }}" required autocomplete="username" autofocus>
@@ -28,9 +28,9 @@
                             </div>
                         </div>
 
-                        <div class="form-group row item" data-help-title="Ime Help"
-                            data-help-text="eMail je obavezan da bi se registrovali.Za uspesnu registraciju je potrebno da potvrdite mail poruku koju ce te dobiti na vas mail">
-                            <label for="email" class="col-md-4 col-form-label text-md-right">{{ __('E-Mail Address') }}</label>
+                        <div class="form-group row item" data-help-title="Email Help"
+                            data-help-text="EMail je obavezan da bi se registrovali.Za uspesnu registraciju je potrebno da potvrdite mail poruku koju ce te dobiti na vas mail">
+                            <label for="email" class="col-md-4 col-form-label text-md-right">{{ __('E-Mail Address') }} <span class="mandatory-star-label">*</span></label>
 
                             <div class="col-md-6">
                                 <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email">
@@ -44,7 +44,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="password" class="col-md-4 col-form-label text-md-right">{{ __('Password') }}</label>
+                            <label for="password" class="col-md-4 col-form-label text-md-right">{{ __('Password') }} <span class="mandatory-star-label">*</span></label>
 
                             <div class="col-md-6">
                                 <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
@@ -58,7 +58,7 @@
                         </div>
 
                         <div class="form-group row">
-                            <label for="password-confirm" class="col-md-4 col-form-label text-md-right">{{ __('Confirm Password') }}</label>
+                            <label for="password-confirm" class="col-md-4 col-form-label text-md-right">{{ __('Confirm Password') }} <span class="mandatory-star-label">*</span></label>
 
                             <div class="col-md-6">
                                 <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
@@ -70,6 +70,7 @@
                                 <button type="submit" class="btn btn-primary">
                                     {{ __('Register') }}
                                 </button>
+                                <div><span class="mandatory-star-label">* denotes mandatory fields</span></div>
                             </div>
                         </div>
                     <!--/form-->

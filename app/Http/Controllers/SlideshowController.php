@@ -25,6 +25,8 @@ class SlideshowController extends Controller
 
     public function __construct(DataService $dataService)
     {
+        $this->middleware(['auth', 'verified'], ['except' => ['index', 'list_all2']]);    // HERE what ya are allowed to access if not loged in
+
         $this->dataService = $dataService;
     }
 
@@ -209,6 +211,11 @@ return view('photo', ['photos' => $files]);
         return view('slideshow2', ['photos' => $files]);
     }
 
+    public function uploadGuessImage()
+    {
+        return view('upload_guess_img');
+    }
+
     // Delete photo (AJAX)
     public function delete(Request $request)
     {
@@ -315,7 +322,7 @@ return view('photo', ['photos' => $files]);
         //return response()->json([])->with('success', 'Image uploaded successfully.');
         //return redirect('/show-valeevent/'.$request->parent_id)->with('success', 'Image uploaded successfully.');
         $sort_by = 'created_at';
-        return redirect('/fame_all2/'.$sort_by)->with('success', 'Image uploaded successfully.');
+        return redirect('/fame-all2/'.$sort_by)->with('success', 'Image uploaded successfully.');
     }
 
     public function resizeAndSaveImage($source_file, $destination_path, $max_width = 800, $max_height = 600, $quality = 85) 

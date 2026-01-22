@@ -14,11 +14,11 @@
 
         <div class="mb-3 item" data-help-title="Description Help"
         data-help-text="Ovde unosite opis dogadjaja. Mozete uneti i linkove na stranice, kao i copy/paste text iz drugih izvora. Pokusajte da jasno unesete sve podatke vezane za dogadaj koji se tice subjekta za koji je vezan. It may contain photos, files, or text data associated with section one.">
-            <label>Description</label>
+            <label>Description <span class ="mandatory-star-label">*</span></label>
             @if($layout == 'show')
-                <textarea id="description" disabled name="description" cols="40" rows="3" class="form-control" placeholder="Enter Description">{{ $item_selected->description }}"</textarea>
+                <textarea id="description" disabled name="description" cols="40" rows="5" class="form-control" placeholder="Enter Description">{{ $item_selected->description }}</textarea>
             @elseif($layout == 'edit')
-                <textarea id="description" name="description" cols="40" rows="8" class="form-control" placeholder="Enter Description">{{ $item_selected->description }}"</textarea>
+                <textarea id="description" name="description" cols="40" rows="8" class="form-control" placeholder="Enter Description">{{ $item_selected->description }}</textarea>
             @else
                 <textarea id="description" name="description" cols="40" rows="8" class="form-control" @if($layout == 'make_famous')placeholder="{{ $image_guess->description }}"
                 @else placeholder="Enter Description"@endif></textarea>
