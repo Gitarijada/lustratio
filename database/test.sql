@@ -1,3 +1,4 @@
 SELECT * FROM users;
+SELECT * FROM page_views;
 DESCRIBE users;
 SHOW FULL TABLES;
