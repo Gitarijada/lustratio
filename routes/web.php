@@ -131,7 +131,6 @@ Route::get('/verify', function () {
 //Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 Route::get('/rote',[RoteController::class, 'index']);
-Route::post('/rote', [RoteController::class, 'index'])->name('valetudinarians.filter');
 Route::get('/rote_show/{id}',[RoteController::class, 'show']);
 Route::get('/rote_create',[RoteController::class, 'create']);
 Route::get('/rote_create_ve',[RoteController::class, 'create_vale_event']);    //create vale and events in one shot-window
