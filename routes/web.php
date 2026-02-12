@@ -91,6 +91,7 @@ Route::post('/update-event/{id}',[EventController::class, 'update']);
 Route::get('add-valeevent', [ValeEventController::class, 'index']);
 Route::post('add-valeevent', [ValeEventController::class, 'index'])->name('add-valeevent.filter');
 Route::post('/store-valeevent',[ValeEventController::class, 'store']);
+Route::post('/update-valeevent',[ValeEventController::class, 'update']);
 
 Route::get('/show-valeevent/{id}',[ValeEventController::class, 'show'])->where('id', '[0-9]+');      //SHOW LULU EQE-click in CALENDAR
 

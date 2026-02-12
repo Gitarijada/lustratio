@@ -28,11 +28,11 @@
                         <div class="container-show">
                             <div class="mb-2">
                                 <label>Ime</label>
-                                <input value="{{ $item_selected->first_name }}" readonly name="first_name" type="text" class="form-control">
+                                <input value="{{ $item_selected->first_name }}" readonly name="first_name" type="text" class="form-control subject-line_C">
                             </div>
                             <div class="mb-2">
                                 <label>Prezime</label>
-                                <input value="{{ $item_selected->last_name }}" readonly name="last_name" type="text" class="form-control subject-line">
+                                <input value="{{ $item_selected->last_name }}" readonly name="last_name" type="text" class="form-control subject-line_C">
                             </div>
                             @if($item_selected->sobriquet != NULL)
                             <div class="mb-3">
@@ -44,7 +44,7 @@
                         
                         <div class="container-show">
                             <div class="mb-3">
-                                <label>G. Rodj.</label>
+                                <label>G. Rođ.</label>
                                 <input value="{{ strtok($item_selected->date_of_birth, '-') }}" readonly name="date_of_birth" type="text" class="form-control">
                             </div>
                             @if($location != NULL)
@@ -72,7 +72,7 @@
                             </div>
                         </div>
 
-                        @if($item_selected->description != null)
+                        @isset($item_selected->description)
                         <div class="mb-3">
                             <label>Description</label>
                             <!--textarea readonly name="description" cols="22" rows="3" class="form-control">{-!! $item_selected->description !!}</textarea-->
@@ -179,38 +179,50 @@
                         <img src="{{ asset('images/pobuna1.jpeg') }}" class="w-2_12 mb-8 shadow-xl" alt="top_logo">
                     </div>
                 @foreach($events as $item)
-                <div class="card-body">
-                        <div class="container-show">
-                                <div class="mb-3">
-                                <label>LOKACIJA</label>
-                                    <div class="mb-3-half"><input disabled value="{{ $item->zip }} {{ $item->name }}" name="location_name"></div>
-                                </div>
-                            @if($item->zip != NULL)
-                                <div class="mb-3">
-                                    <label>KATEGORIJA</label>
-                                    <div class="mb-3-half"><input disabled value="{{ $item->category_name }}" name="category_name"></div>
-                                </div>
+                <div class="card-body py-2">
+                        <div class="row g-2 gx-1">
+                            <!-- 40% Width (5 out of 12 columns) -->
+                            <div class="col-md-4 mb-1">
+                                <label class="form-label">LOKACIJA</label>
+                                <input class="form-control form-control-sm" disabled value="{{ $item->zip }} {{ $item->name }}" name="location_name">
+                            </div>
+
+                            <!-- 40% Width (5 out of 12 columns) -->
+                            <div class="col-md-5 mb-1">
+                                <label class="form-label">KATEGORIJA</label>
+                                <input class="form-control form-control-sm" disabled value="{{ $item->category_name ?? 'N/A' }}" name="category_name">
+                            </div>
+
+                            <!-- Remaining 20% Width (2 out of 12 columns) -->
+                            @if($item->event_date != NULL)
+                            <div class="col-md-3 mb-1">
+                                <label class="form-label">Date</label>
+                                <input class="form-control form-control-sm" disabled value="{{ Carbon\Carbon::parse($item->event_date)->format($item->precision_date ?? 'd M Y') }}">
+                                <!--div class="mb-3"><input disabled value="{-{ Carbon\Carbon::parse($item->event_date)->format('M Y') }}"></div-->
+                            </div>
                             @endif
                         </div>
 
                         <div class="container-show">
-                            <div class="mb-3-60prc">
+                            <div class="mb-3 w-100">
                                 <label>Event Name</label>
-                                <input value="{{ $item->event_name }}" readonly name="event_name" type="text" class="form-control">
+                                <input value="{{ $item->event_name }}" readonly name="event_name" type="text" class="form-control subject-line_C">
                             </div>
-                            @if($item->event_date != NULL)
-                                <div class="mb-3-date">
-                                    <label>Date</label>
-                                    <div class="mb-3"><input disabled value="{{ Carbon\Carbon::parse($item->event_date)->format('M Y') }}"></div>
-                                </div>
-                            @endif
                         </div>
                         
                         <div class="mb-3">
-                            <label>Description</label>
+                            <label>Event Description</label>
                             <!--textarea readonly name="description" cols="22" rows="5" class="form-control">"{-{ $item->description }}"</textarea-->
                             <div class="fake-textarea" style="max-height: 200px; height: auto;">{!! $item->formatted_description !!}</div>
                         </div>
+
+                        @isset($item->vev_description)
+                            <label>Event Description for {{ $item_selected->first_name }} {{ $item_selected->last_name }}</label>
+                            <div class="mb-3">
+                                <div class="fake-textarea" style="max-height: 180px; height: auto;">{!! $item->formatted_vev_description !!}</div>
+                            </div>
+                        @endisset
+                        
                         <!--div style="height: 1px; background-color: black; margin: 10px 0;"></div-->
                 
                 </div>

@@ -41,8 +41,9 @@ function fetch_select_events(filterRoute, categoryID = null, region = null, loca
         });
 }
 
-function get_data_event(filterRoute, eventID = null, type = 'data-event-rest') {
+function get_data_event(filterRoute, eventID = null, type = 'data-event-rest', layout = 'show') {
         //const SITEURL = "{{ url('/') }}";
+        //alert($('meta[name="csrf-token"]').attr('content'));
         $.ajax({
             type:'POST',
             //url: SITEURL + '/exist-event-input',
@@ -51,7 +52,8 @@ function get_data_event(filterRoute, eventID = null, type = 'data-event-rest') {
             data:{
                 //_token: "{{ csrf_token() }}",
                 event_ID:eventID,
-                type:type
+                type:type,
+                layout:layout
             },
             success:function(data){
                 if(data){
@@ -67,6 +69,8 @@ function get_data_event(filterRoute, eventID = null, type = 'data-event-rest') {
                            
                             $('#' + type + '-append').append(data.html);
                             // IMPORTANT — reinitialize after injecting the HTML
+                            existingEventOnChange.init_onChange();
+                            ChooseNewSelector.init();
                             LocationSelector.init();
                             HelpModal.init();
                             toastr.success('Choose existing Event, select CATEGORY OR LOCATION to search Event.', 'Event...');
@@ -87,6 +91,15 @@ function get_data_event(filterRoute, eventID = null, type = 'data-event-rest') {
                         $('#' + type + '-append').append(data.html);
                         HelpModal.init();
                         toastr.success('Event chosen. Detailes are...', 'Event...');
+                        // 2. RE-INITIALIZE the specific scripts for the new elements
+                        // These functions must be globally accessible (defined in your miscellaneous.js)
+                        // to inject HTML via AJAX, the browser needs a few milliseconds to process the new elements and update the DOM tree.
+                        // The 50 represents 50 milliseconds (which is 0.05 seconds) MDN Web Docs - setTimeout.
+                        setTimeout(() => {   
+                            if (typeof initProgressBarCounter === 'function') {
+                                initProgressBarCounter('vev_description', 'vev_char-count', 'description-bar');
+                            }
+                        }, 0); //}, 50);
                     } else if(type == 'data-event-combined') {
                         data_main.remove();
                         if (data_rest) {
@@ -94,6 +107,7 @@ function get_data_event(filterRoute, eventID = null, type = 'data-event-rest') {
                         }
                         $('#data-event-main-append').html(data.html_main);
                         $('#data-event-rest-append').html(data.html_rest);
+                        ChooseNewSelector.init();
                         LocationSelector.init();
                         HelpModal.init();
                         toastr.success('Create New Event !!!', 'Event...');
@@ -106,7 +120,8 @@ function get_data_event(filterRoute, eventID = null, type = 'data-event-rest') {
                 }
             },
                 error: function(xhr, status, error) {
-                console.error('Error loading data:', error);
+                console.error("Error loading data:", status, error);
+                //console.log("Response Text:", xhr.responseText);
             }
         });
 }

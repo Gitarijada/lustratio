@@ -11,7 +11,7 @@
             </div>
             <div class="flex-item">
                 <!--form action="{***{ url('/valetudinarian-ajax') }}" method="GET"-->
-                    <input id="search" type="text" name="search"/>    <!--required/-->
+                    <input id="search" type="text" name="search">    <!--required/-->
                     <!--button id="search_btn" type="button">Search</button-->
                     <img id="search_img" src="{{ asset('images/search-icon-no-background-hd-260.png') }}" alt="Search" width=3% height=auto />
                 <!--/form-->
@@ -27,7 +27,7 @@
                     @endif
                     <th scope="col">Ime</th>
                     <th scope="col">Prezime</th>
-                    <th scope="col">G. Rodj.</th>
+                    <th scope="col">G. Rođ.</th>
                     <th scope="col">Zanimanje</th>
                     @if(isset($layout) && $layout == 'index')<th scope="col">Pozicija</th>@endif
                     <th scope="col">

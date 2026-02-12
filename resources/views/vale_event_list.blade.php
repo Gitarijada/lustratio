@@ -8,7 +8,7 @@
         </div>
         <div class="flex-item">
             <form action="{{ url('/crud-event-ajax') }}" method="GET">
-                <input id="search" type="text" name="search" required/>
+                <input id="search" type="text" name="search">
                 <button id="search_btn" type="button">Search</button>
             </form>
         </div>    

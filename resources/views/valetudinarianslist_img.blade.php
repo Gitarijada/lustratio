@@ -8,7 +8,7 @@
             </div>
             <div class="flex-item">
                 <!--form action="{***{ url('/valetudinarian-ajax') }}" method="GET"-->
-                    <input id="search" type="text" name="search"/>    <!--required/-->
+                    <input id="search" type="text" name="search">    <!--required/-->
                     <!--button id="search_btn" type="button">Search</button-->
                     <img id="search_img" src="{{ asset('images/search-icon-no-background-hd-260.png') }}" alt="Search" width=3% height=auto />
                 <!--/form-->
@@ -22,7 +22,7 @@
                     <th scope="col">&nbsp;&nbsp;&nbsp;</th>
                     <th scope="col">Ime</th>
                     <th scope="col">Prezime</th>
-                    <th scope="col">G. Rodj.</th>
+                    <th scope="col">G. Rođ.</th>
                     <th scope="col">Zanimanje</th>
                     <th scope="col">Pozicija</th>
                     <th scope="col">

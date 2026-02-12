@@ -16,7 +16,17 @@ class Valetudinarian extends Model
           
     protected $fillable = ['first_name', 'last_name'];
 
-	public function location()
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
+    }
+
+    public function party()
+    {
+        return $this->belongsTo(Party::class);
+    }
+    
+	/*public function location()
   	{
     return $this->hasOne(Location::class);
   	}
@@ -24,8 +34,9 @@ class Valetudinarian extends Model
 	public function party()
   	{
     return $this->hasOne(Party::class);
-  	}
+  	}*/
 
+    protected $appends = ['formatted_description'];
 	// Accessor: This runs automatically when you call $valetudinarian->description
     //public function getDescriptionAttribute($value)
     // This runs automatically when you call $valetudinarian->formatted_description, returns the processed value
@@ -42,10 +53,16 @@ class Valetudinarian extends Model
         
         if (preg_match($urlPattern, $rawValue)) {
             // Use the rawValue in the regex replacement
-            $formattedValue = preg_replace($urlPattern, '<a href="$1" target="_blank" class="text-primary">$1</a>', $rawValue);
+            $formattedValue = preg_replace($urlPattern, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-primary">$1</a>', $rawValue);
             return str_replace('href="www.', 'href="http://www.', $formattedValue);
         }
 
         return $rawValue;
+    }
+
+    use \App\Traits\FormatsDescription;
+
+    public function getFormattedVevDescriptionAttribute() {
+        return $this->formatUrlContent($this->attributes['vev_description'] ?? null);
     }
 }

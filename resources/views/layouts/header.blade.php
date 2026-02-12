@@ -15,6 +15,11 @@
 
     <!-- JQuery-ajax search category store & other drop box & toastr for calendar as well -->
     <link href="{{ asset('css/toastr.min.css') }}" rel="stylesheet">
+    <script type="text/javascript">
+        const BASE_URL = "{{ url('/') }}";
+        // Define the URL here where Blade CAN process it
+        //window.siteConfig = { baseUrl: "{{ url('/') }}" };
+    </script>
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="{{ asset('js/toastr.min.js') }}"></script>
 
@@ -68,8 +73,26 @@
       
     }
     
+@media (min-width: 1200px) {
+    .modal-custom-wide {
+        max-width: 85%; /* Adjust percentage as needed */
+    }
+}
+
 .validation-except-margin {
   margin: 0px 25px;
+}
+
+.col-50 {
+  max-width: 30px;
+}
+
+.col-150 {
+  width: 150px;
+}
+
+.col-200 {
+  width: 200px;
 }
 
 .col-w70-auto {    /* use for description field...*/
@@ -135,15 +158,26 @@
   min-width: 70px;
 }
 
+.mb-3-third {
+  width: 30%;
+  margin-bottom: 1rem !important;
+}
+
 .mb-3-half {
   width: 50%;
   margin-bottom: 1rem !important;
 }
 
 .mb-3-date {
-  max-width: 40%;
+  max-width: 30%;
   margin-bottom: 1rem !important;
 }
+
+.mb-3-date-full {
+  max-width: 100%;
+  margin-bottom: 1rem !important;
+}
+
 
 .mb-3-30prc {
   width: 30%;
@@ -168,6 +202,16 @@
   display: flex;
   justify-content: flex-start; /* Aligns items to the end of the main axis (right in a left-to-right context) */
   gap: 40px; /* Adds 20 pixels of space between all direct children */
+}
+
+.container-date {
+  display: flex;
+  /* Optional: Add spacing or alignment */
+  justify-content: space-around; /* Distributes space evenly around items */
+  align-items: stretch; /* Vertically aligns items in the center */
+  display: flex;
+  justify-content: flex-start; /* Aligns items to the end of the main axis (right in a left-to-right context) */
+  gap: 17px; /* Adds 20 pixels of space between all direct children */
 }
 
 .item-container {
@@ -224,6 +268,35 @@ tr.status-4,
   background-color: #FFFFE0; /* Light yellow */
 }
 
+.vevtextarea {
+
+    /* Scrolling behavior */
+  overflow-y: auto;        /* Add scrollbar if content exceeds max-height */
+  box-sizing: border-box;  /* Ensures padding/border is included in width/height calculation */
+  white-space: pre-wrap; /* Preserves line breaks and wraps text like a textarea */
+  resize: vertical; /* Optional: allows manual resizing like a real textarea */
+
+  word-break: break-word;   /* Break long words to new lines */
+  overflow-wrap: break-word;/* Modern equivalent to word-break */
+
+  width: 100%; /* Makes the textarea responsive to its container width */
+  height: 150px; /* Sets a fixed height */
+  /* cols="40"; rows="3"; */
+  field-sizing: content; /* Enables auto-growth */
+  min-height: 50px;      /* Starting height */
+  max-height: 150px;     /* Cap the growth */
+  border: 1px solid #ced4da;  /* Styles the border */
+  padding: 0.375rem 0.75rem;  /*padding: 12px; /* Adds space between text and border */
+  font-weight: 400;
+  line-height: 1.6;
+  color: #495057;
+  /*font-family: monospace; /* Essential for "ch" units to align precisely */
+  background: #e9ecef;
+  background-color: #e9ecef;  /*#f8f8f8; * Light gray background */  
+  /*border-radius: 4px; /* Rounds the corners */
+  /*font-size: 16px; /* Sets the font size */ 
+}
+
 .fake-textarea {
   /*width: 22ch;
   height: 3em;   or*/ 
@@ -231,11 +304,18 @@ tr.status-4,
   height: auto;*/
   
   /* Scrolling behavior */
-  overflow-y: auto;   /* Adds vertical scrollbar only if text overflows */
+  overflow-y: auto;        /* Add scrollbar if content exceeds max-height */
+  box-sizing: border-box;  /* Include padding/border in the width calculation */
   white-space: pre-wrap; /* Preserves line breaks and wraps text like a textarea */
   resize: vertical; /* Optional: allows manual resizing like a real textarea */
+
+  word-break: break-word;   /* Break long words to new lines */
+  overflow-wrap: break-word;/* Modern equivalent to word-break */
   
   /* Standard textarea styling */
+  max-height: 150px;
+  height: auto;
+  width: 100%;             /* Occupy full width of the td */
   border: 1px solid #ced4da;
   padding: 0.375rem 0.75rem;
   font-weight: 400;
@@ -243,6 +323,16 @@ tr.status-4,
   color: #495057;
   /*font-family: monospace; /* Essential for "ch" units to align precisely */
   background: #e9ecef;
+}
+
+.fake-textarea_temp {
+  max-height: 150px;
+  height: auto;
+  width: 100%;             /* Occupy full width of the td */
+  word-break: break-word;   /* Break long words to new lines */
+  overflow-wrap: break-word;/* Modern equivalent to word-break */
+  overflow-y: auto;        /* Add scrollbar if content exceeds max-height */
+  box-sizing: border-box;  /* Include padding/border in the width calculation */
 }
 
 /*

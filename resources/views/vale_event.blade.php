@@ -21,6 +21,75 @@
 
                 @include("valetudinarianslist_check")
 
+                
+            </section>
+
+            <section class="col-md-4">
+                <div class="card mb-3">
+                <img src="{{ asset('images/pobuna.jpeg') }}" class="w-1_12 mb-8 shadow-xl" alt="top_logo">
+                
+                <!-- validation Throw Exception. if $request.input validation - if ($errors->any())-->
+                @include("layouts.validation_exception")
+                
+                    <!-- right side Input for Events-->
+                    <div class="card-body">
+
+                    @if(($layout == 'create') OR ($layout == 'add'))
+
+                        @include("event_input-main")
+                        <div id="data-event-rest-append"></div> <!-- that we can show rest event data once user choose Event -->
+                        @if($layout == 'create')@include("event_input-rest")@endif
+
+                    @elseif(($layout == 'create_passID') OR ($layout == 'show'))
+
+                        @if($category != NULL)
+                            <div class="mb-3">
+                            <label>KATEGORIJA</label>
+                                <input disabled value="{{ $category->category_name }}" name="category_name">
+                            </div>
+                        @endif
+
+                        <div class="dropdown-divider"></div>
+                        <div class="mb-3">
+                            <label>Event Name</label>
+                            <input id="ev_id" type="hidden" name="event_id" value="{{ $event->id }}">
+                            <div><input disabled value="{{ $event->event_name }}" class="form-control subject-line_C"></div>
+                        </div>
+
+                        @if(isset($location))
+                            <div class="mb-3">
+                            <label>LOKACIJA</label>
+                                <input disabled value="{{ $location->zip }} {{ $location->name }}" name="location_name">
+                            </div>
+                        @endif
+
+                        @if(isset($event->event_date))
+                            <div class="mb-3-date">
+                                    <label>Date</label>
+                                    <input disabled value="{{ Carbon\Carbon::parse($event->event_date)->format($event->precision_date ?? 'd M Y') }}">
+                            </div>
+                        @endif
+                        
+                    @endif
+                        
+                    @if($layout == 'show')
+                        <div class="mb-3">
+                            <label>Description</label>
+                            <!--textarea disabled name="event_description" cols="40" rows="12" class="form-control">{-{ $event->description }}</textarea-->
+                            <div class="fake-textarea" style="max-height: 200px; height: auto;">{!! $event->formatted_description !!}</div>
+
+                        </div>
+                    @else
+                        <!--input type="submit" class="btn btn-info" value="Save">
+                        <!X--input type="reset" class="btn btn-warning" value="Reset"--X>
+                        &emsp;
+                        <a href="{-{ url('list-event') }}" class="btn btn-warning">Cancel</a-->
+                        <a id="confirmBtn" class="btn btn-sm btn-outline-primary toolbar-btn">Confirm & Continue</a>
+                    @endif
+                    
+                    </div>
+                </div>
+
                 @if($layout == 'show')
                     <div id="photo-section" class="card mb-3">
                     <div class="card-body">
@@ -65,73 +134,7 @@
                     </div>            
                     </div>
                 @endif
-            </section>
-
-            <section class="col-md-4">
-                <div class="card mb-3">
-                <img src="{{ asset('images/pobuna.jpeg') }}" class="w-1_12 mb-8 shadow-xl" alt="top_logo">
                 
-                <!-- validation Throw Exception. if $request.input validation - if ($errors->any())-->
-                @include("layouts.validation_exception")
-                
-                    <!-- right side Input for Events-->
-                    <div class="card-body">
-
-                    @if(($layout == 'create') OR ($layout == 'add'))
-
-                        @include("event_input-main")
-                        <div id="data-event-rest-append"></div> <!-- that we can show rest event data once user choose Event -->
-                        @if($layout == 'create')@include("event_input-rest")@endif
-
-                    @elseif(($layout == 'create_passID') OR ($layout == 'show'))
-
-                        @if($category != NULL)
-                            <div class="mb-3">
-                            <label>KATEGORIJA</label>
-                                <input disabled value="{{ $category->category_name }}" name="category_name">
-                            </div>
-                        @endif
-
-                        <div class="dropdown-divider"></div>
-                        <div class="mb-3">
-                            <label>Event Name</label>
-                            <input id="ev_id" type="hidden" name="event_id" value={{ $event->id }}>
-                            <div><input disabled value="{{ $event->event_name }}" class="form-control"></div>
-                        </div>
-
-                        @if(isset($location))
-                            <div class="mb-3">
-                            <label>LOKACIJA</label>
-                                <input disabled value="{{ $location->zip }} {{ $location->name }}" name="location_name">
-                            </div>
-                        @endif
-
-                        @if(isset($event->event_date))
-                            <div class="mb-3-date">
-                                    <label>Date</label>
-                                    <input disabled value="{{ Carbon\Carbon::parse($event->event_date)->format('M Y') }}">
-                            </div>
-                        @endif
-                        
-                    @endif
-                        
-                    @if($layout == 'show')
-                        <div class="mb-3">
-                            <label>Description</label>
-                            <!--textarea disabled name="event_description" cols="40" rows="12" class="form-control">{-{ $event->description }}</textarea-->
-                            <div class="fake-textarea" style="max-height: 200px; height: auto;">{!! $event->formatted_description !!}</div>
-
-                        </div>
-                    @else
-                        <!--input type="submit" class="btn btn-info" value="Save">
-                        <!X--input type="reset" class="btn btn-warning" value="Reset"--X>
-                        &emsp;
-                        <a href="{-{ url('list-event') }}" class="btn btn-warning">Cancel</a-->
-                        <a id="confirmBtn" class="btn btn-sm btn-outline-primary toolbar-btn">Confirm & Continue</a>
-                    @endif
-                    
-                    </div>
-                </div>
             </section>    
         </div>
     <!--/form-->
@@ -186,7 +189,7 @@
 </div>
 
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-custom-wide"> <!-- modal-custom-wide is added to cope with new column vev_description-->
         <div class="modal-content shadow-lg">
             <form action="{{ url('/store-valeevent') }}" method="post">
                 @csrf 
@@ -281,19 +284,23 @@
     
 //********************************************************************** Confirmation *****
     const confirmBtn = document.getElementById('confirmBtn');
-    confirmBtn.addEventListener('click', () => {
-        //if (!confirm(`"Save". You are going to add the following persons to event.`)) return;
-        const checkedCheckboxes = document.querySelectorAll('input[name="vale_selected[]"]:checked');
-        const vale_selected = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
-        if (vale_selected.length === 0) {
-            alert("You have not specified which persons you are referring to. To identify the persons connected to the event, please check/choose the persons !!!");
-            return
-        } else {
-            const eventID = $('#ev_id').val();
-                            //alert(vale_selected.toString());  
-            get_data_confirmation(eventID, vale_selected)
-        }
-    });
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+            //if (!confirm(`"Save". You are going to add the following persons to event.`)) return;
+            const checkedCheckboxes = document.querySelectorAll('input[name="vale_selected[]"]:checked');
+            const vale_selected = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
+            if (vale_selected.length === 0) {
+                alert("You have not specified which persons you are referring to. To identify the persons connected to the event, please check/choose the persons !!!");
+                return
+            } else {
+                const eventID = $('#ev_id').val();
+                                //alert(vale_selected.toString());  
+                get_data_confirmation(eventID, vale_selected)
+            }
+        });
+    } else {
+        console.warn("Element '#confirmBtn' not found on this page.");
+    }
 
     function get_data_confirmation(eventID = null, valeSelected = null) {
         //const SITEURL = "{{ url('/') }}";
@@ -318,8 +325,29 @@
                                                                         /*const endTime = Date.now();
                                                                         const elapsedTime = endTime - startTime;
                                                                         alert('JSON ' + partyID + ' ' + elapsedTime);*/
-                    var confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
-                    confirmModal.show();
+                        // 2. RE-INITIALIZE the specific scripts for the new elements
+                        // These functions must be globally accessible (defined in your miscellaneous.js)
+                        // to inject HTML via AJAX, the browser needs a few milliseconds to process the new elements and update the DOM tree.
+                        // The 50 represents 50 milliseconds (which is 0.05 seconds) MDN Web Docs - setTimeout.
+                        setTimeout(() => {
+                            // Find all textareas in the newly appended content
+                            const textareas = document.querySelectorAll('.vev-textarea');
+                            
+                            textareas.forEach(textarea => {
+                                // Extract the numeric ID from our element ID (e.g., "vev_desc__45" -> "45")
+                                const id = textarea.id.replace('vev_desc_', '');
+                                
+                                // Initialize the counter for this specific row
+                                if (typeof initCharCounter === 'function') {
+                                    initCharCounter(`vev_desc_${id}`, `vev_char-count_${id}`);
+                                    //initProgressBarCounter('vev_desc_${id}', 'vev_char-count_${id}', 'description-bar_${id}');
+                                }
+                            });
+
+                            var confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                            confirmModal.show();
+                        }, 0);     // }, 50);  was 50 milliseconds
+
                 }else{
                     toastr.info('Oops Something went wrong" error on processing no matter ...', 'Loading');
                 }

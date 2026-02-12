@@ -141,7 +141,7 @@
                         <div class="mb-3" item" data-help-title="Description Help" 
                             data-help-text="Ako imate neke vazne podatke o samoj osobi. Podatke o dogadjaju ne unositi ovde. Polje nije obavezno.">
                             <label>Description</label>
-                            <textarea name="val_description" cols="22" rows="3" class="form-control" placeholder="Do 600 karaktera max">{{ $item_selected->description }}</textarea>
+                            <textarea name="val_description" cols="22" rows="3" class="form-control" placeholder="Do 700 karaktera max">{{ $item_selected->description }}</textarea>
                         </div>
                         
                         <div class="container-show">

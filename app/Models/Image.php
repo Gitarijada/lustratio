@@ -14,4 +14,11 @@ class Image extends Model
     protected $primaryKey = 'id'; 
 
     protected $fillable = ['valetudinarian_id', 'image_name'];
+
+    public function valetudinarian()
+    {
+        // Second argument is the foreign key on the images table
+        // Third argument is the owner key on the valetudinarians table
+        return $this->belongsTo(Valetudinarian::class, 'valetudinarian_id', 'id');
+    }
 }

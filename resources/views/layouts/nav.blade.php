@@ -24,14 +24,14 @@
                           </a>
                     
                         <div class="dropdown-content" aria-labelledby="dropdownMenuLink">
-                            <a class="dropdown-item" href="{{ url('/upload-guess') }}">DODAJ GA POZNATIM</a>
+                            <a class="dropdown-item" href="{{ url('/upload_guess_img') }}">DODAJ GA POZNATIM</a>
                             <a class="dropdown-item" href="{{ url('/equ') }}">SLUCAJEVI</a>
                             <a class="dropdown-item" href="{{ url('/list-event') }}">EVENTS</a>
                             <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ url('/create_ve') }}">CREATE SLUCAJ I EVENT</a>
                             <a class="dropdown-item" href="{{ url('/create') }}">CREATE SLUCAJ</a>
                             <a class="dropdown-item" href="{{ url('/create-event') }}">CREATE EVENTS</a>
                             <a class="dropdown-item" href="{{ url('/add-valeevent') }}">ADD VALE TO EVENT</a>
-                            <a class="dropdown-item" href="{{ url('/create_ve') }}">CREATE SLUCAJ I EVENT</a>
                             <div class="dropdown-divider"></div>
                         </div>
                     </div>

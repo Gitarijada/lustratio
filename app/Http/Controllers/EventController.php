@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\Event;
+use App\Models\Valetudinarian;
 use App\Models\ValeEvent;
 use App\Models\Location;
 use App\Models\Party;
@@ -156,7 +157,7 @@ class EventController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function create(Request $request)
-    {
+    {   
         if (session('showEventInfoModal') === null) {    
             session(['showEventInfoModal' => true]);     //set to true, not set, show once 
         } else {
@@ -194,8 +195,7 @@ class EventController extends Controller
                             'locations'=> $locations, 
                             'categories'=> $categories, 
                             'events'=> $paginatedData,
-                            'drop_item_selected'=> $drop_item_selected,
-                            'param' => 0, 
+                            'drop_item_selected'=> $drop_item_selected, 
                             'layout'=>'create']);
     }
 
@@ -264,11 +264,18 @@ class EventController extends Controller
         LEFT JOIN (parties c, locations d) ON (a.party_id = c.id AND a.location_id = d.id)
         WHERE a.id = '$id'");*/
 
-        $valetudinarians = DB::table('valetudinarians')->where('valetudinarians.id', '=', $id)
+        // VALELIST_CHECK.BLADE, is used only here, and will always have one record ($id), new $id created before, and here is to get event (new or existed)
+        /* DELETED $valetudinarians = DB::table('valetudinarians')->where('valetudinarians.id', '=', $id)
             ->leftjoin('parties', 'valetudinarians.party_id', '=', 'parties.id')
             ->leftjoin('locations', 'valetudinarians.location_id', '=', 'locations.id')
             ->select('valetudinarians.*', 'parties.name as party_name', 'locations.name as location_name', DB::raw("'0' as used_by_other"))
-            ->get();
+            ->get();*/
+
+                    
+        $valetudinarian = Valetudinarian::with(['party', 'location'])
+            ->select('*') // Selects valetudinarians.*
+            ->selectRaw("'0' as used_by_other")
+            ->find($id);
 
         $categories = Category::all();
         $parties = Party::all();
@@ -278,10 +285,10 @@ class EventController extends Controller
                                     'regions'=> $regions,  
                                     'locations' => $locations,
                                     'categories'=> $categories, 
-                                    'valetudinarians'=> $valetudinarians,
-                                    'param' => 1, 
+                                    //'valetudinarians'=> $valetudinarians,
+                                    'valetudinarian'=> $valetudinarian, 
                                     //'events' => $events,
-                                    'layout'=>'create']);  
+                                    'layout'=>'create/att_vale_event']);  
     }
 
     /**
@@ -292,107 +299,124 @@ class EventController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'category_id' => 'required',
-            'event_name' => 'required|unique:events',
-            'description' => 'required'/*,
-            'location_id' => [
-                function ($attribute, $value, $fail) use ($request) {
-                    $exists = Event::where('event_name', $request->event_name)
-                        ->where('location_id', $request->location_id)
-                        ->exists();
+        if (isset($request->event_id)) {
+            $event_id = (int)$request->event_id;
+        } else {
+            $with_new_event = $request->validate([
+                'category_id' => 'required',
+                'event_name' => 'required|unique:events|max:150',
+                'description' => 'required'
+                /*'location_id' => [
+                    function ($attribute, $value, $fail) use ($request) {
+                        $exists = Event::where('event_name', $request->event_name)
+                            ->where('location_id', $request->location_id)
+                            ->exists();
 
-                    if ($exists) {
-                        $fail('The combination of event name and location already exist. Please, check existing data for the Evant you wanna add (if, the Evant person exist and is not the same one, please, add the number next to the first name. Like "Incident Skupstina 2")');
-                    }
-                },
-            ],*/
-            //LU'event_date'  =>  'required|date_format:Y-m-d H:i:s'
-            //LU'event_end' => 'required|date_format:Y-m-d H:i:s|after:event_start',
-        ]);
-
-        $category_id = 1;   // Default category OTHERS/OSTALO (has to make default in table)
-        if ($request->input('category_id') != NULL) { 
-            $category_id = (int)$request->input('category_id');
-        }
-
-        $location_id = 1;   // Default, only event location. If not specifed then is 1 = Serbia.
-        if ($request->input('local_id')) {
-            $location_id = (int)$request->input('local_id');
-        } elseif($request->input('location_id')) {
-            $location_id = (int)$request->input('location_id');
-        }
-        $event_date = NULL;
-        if ($request->input('event_date')) {
-            $event_date = Carbon::parse($request->input('event_date'))->format('Y-m-d');
-        }
-        $event = Event::create([   //you can use $car = Car::make([ insted but then you have to use $car->save(); before return redi...
-            //LU'group_id' => $request->input('group_id'),
-            'event_name' => $request->input('event_name'),
-            'owner_id' => Auth::user()->id,
-            //'event_date' => Carbon::parse($request->input('event_date'))->toDateString(),
-            'event_date' => $event_date,
-            //'event_date' => $request->input('event_date'),
-            'location_id' => $location_id,
-            'description' => $request->input('description'),
-            'category_id' => $category_id
-            //LU'event_end' => $request->input('event_end')
-        ]);
-
-        /********************************** Start images */
-        if($request->hasFile('image')) {
-
-            //dd($request->all());
-            $request->validate([
-                'image' => 'required|mimes:jpg,png,jpeg|max:9048',  // was 5048KB = 5.048MB  
+                        if ($exists) {
+                            $fail('The combination of event name and location already exist. Please, check existing data for the Evant you wanna add (if, the Evant person exist and is not the same one, please, add the number next to the first name. Like "Incident Skupstina 2")');
+                        }
+                    },
+                ],*/
+                //LU'event_date'  =>  'required|date_format:Y-m-d H:i:s'
+                //LU'event_end' => 'required|date_format:Y-m-d H:i:s|after:event_start',
             ]);
-            //if(!$request->file('image')->getError()) {}      //or $request->file('image')->getError()->isvalid()
+        }
 
-            $file_name_original_size = $event->id . '-' . $request->image->getClientOriginalName();
-            
-            $file_name = Carbon::parse(time())->format('Ymd') . '-' . $event->id . '-' . rand(100, 999) . '.' . $request->image->getClientOriginalExtension();
-
-            $request->image->move(public_path('storage/event_images'), $file_name_original_size);     //name is made by image cls
-
-            //*******resize file and delete original */
-            $source_file = public_path('storage/event_images') . '/' . $file_name_original_size;
-            $destination_file = public_path('storage/event_images') . '/' . $file_name;
-            // $max_width = 800; $max_height = 600;  $jpeg_quality = 85;
-            if ($this->resizeAndSaveImage($source_file, $destination_file)) {
-                echo "Image resized and saved successfully to " . $destination_file;
-                ImageEvent::create([   //you can use $car = Car::make([ insted but then you have to use $car->save(); before return redi...
-                    'event_id' => $event->id,
-                    'image_name' => $file_name
-                ]);
-            } else {
-                echo "Failed to resize image.";
+        if (isset($with_new_event)) {
+            $category_id = 1;   // Default category OTHERS/OSTALO (has to make default in table)
+            if ($request->input('category_id') != NULL) { 
+                $category_id = (int)$request->input('category_id');
             }
 
-            //*******delete original */
-            if (file_exists($source_file)) { // Check if the file exists before attempting to delete
-                if (unlink($source_file)) {
-                    echo "The file '{$source_file}' was successfully deleted.";
+            $location_id = 1;   // Default, only event location. If not specifed then is 1 = Serbia.
+            if ($request->input('local_id')) {
+                $location_id = (int)$request->input('local_id');
+            } elseif($request->input('location_id')) {
+                $location_id = (int)$request->input('location_id');
+            }
+
+            $event_data = [
+                'event_name' => $request->input('event_name'),
+                'owner_id' => Auth::user()->id,
+                'category_id' => $category_id,
+                'location_id' => $location_id,
+                'description' => $request->input('description'),
+            ];
+
+            if ($request->filled('event_date')) {
+                $event_data['event_date'] = Carbon::parse($request->input('event_date'))->format('Y-m-d');
+                $event_data['precision_date'] = $request->input('precision_date');
+            }
+
+            $event = Event::create($event_data);
+
+            /********************************** Start images */
+            if($request->hasFile('image')) {
+
+                //dd($request->all());
+                $request->validate([
+                    'image' => 'required|mimes:jpg,png,jpeg|max:9048',  // was 5048KB = 5.048MB  
+                ]);
+                //if(!$request->file('image')->getError()) {}      //or $request->file('image')->getError()->isvalid()
+
+                $file_name_original_size = $event->id . '-' . $request->image->getClientOriginalName();
+                
+                $file_name = Carbon::parse(time())->format('Ymd') . '-' . $event->id . '-' . rand(100, 999) . '.' . $request->image->getClientOriginalExtension();
+
+                $request->image->move(public_path('storage/event_images'), $file_name_original_size);     //name is made by image cls
+
+                //*******resize file and delete original */
+                $source_file = public_path('storage/event_images') . '/' . $file_name_original_size;
+                $destination_file = public_path('storage/event_images') . '/' . $file_name;
+                // $max_width = 800; $max_height = 600;  $jpeg_quality = 85;
+                if ($this->resizeAndSaveImage($source_file, $destination_file)) {
+                    echo "Image resized and saved successfully to " . $destination_file;
+                    ImageEvent::create([   //you can use $car = Car::make([ insted but then you have to use $car->save(); before return redi...
+                        'event_id' => $event->id,
+                        'image_name' => $file_name
+                    ]);
                 } else {
-                    echo "Error: The file '{$source_file}' could not be deleted.";
+                    echo "Failed to resize image.";
                 }
-            } else {
-                echo "Error: The file '{$source_file}' does not exist.";
+
+                //*******delete original */
+                if (file_exists($source_file)) { // Check if the file exists before attempting to delete
+                    if (unlink($source_file)) {
+                        echo "The file '{$source_file}' was successfully deleted.";
+                    } else {
+                        echo "Error: The file '{$source_file}' could not be deleted.";
+                    }
+                } else {
+                    echo "Error: The file '{$source_file}' does not exist.";
+                }
             }
         }
         /********************************************************** End images */
-
-        $valetudinarian_id = $request->input('valetudinarian_id');
-        if ($valetudinarian_id == NULL) {
-            return redirect('/create-valeevent/'.$event->id);    //Here is continuation for ref tables vale_events
-        } elseif ($event->id != NULL) {        //if we doing from start (whole input) from Vale-Event-ValeEvent
-    
-            ValeEvent::create([   //you can use $equ_events = EquEvent::make([ insted but then you have to use $car->save(); before return redi...
-                'event_id' => $event->id,
-                'valetudinarian_id' => $valetudinarian_id
-            ]);
+        if (isset($event->id)) {
+            $event_id = $event->id;
         }
 
-        return redirect('/create');         //came to new Vale input --- new vale input - all way around
+        if ($request->filled('valetudinarian_id')) {    //in a case 'create/att_vale_event' (NOT 'create')
+            $valetudinarian_id = $request->input('valetudinarian_id');
+
+            $val_event_data = [
+                'event_id' => $event_id,
+                'valetudinarian_id' => $valetudinarian_id,
+                'owner_id' => auth()->user()->id,
+            ];
+
+            if ($request->filled('vev_description')) {
+                $val_event_data['vev_description'] = $request->input('vev_description');
+            }
+
+            ValeEvent::create($val_event_data);
+
+            //return redirect('/create');         //came to new Vale input --- new vale input - all way around
+            return redirect('/show/'.$valetudinarian_id);
+        } else {
+            return redirect('/create-valeevent/'.$event_id);    //Go and find $valetudinarian for this @event (id) Here is continuation for ref tables vale_events
+        } 
+
     }
 
     /**
@@ -462,7 +486,7 @@ class EventController extends Controller
         $request->validate([
             //'event_name' => 'required|unique:events',
             'category_id' => 'required',
-            'event_name' => 'required',
+            'event_name' => 'required|max:150',
             'description' => 'required'
             //'event_start'  =>  'required|date_format:Y-m-d H:i:s',
             //'event_end' => 'required|date_format:Y-m-d H:i:s|after:event_start',
@@ -475,14 +499,17 @@ class EventController extends Controller
             $location_id = (int)$request->input('location_id');
         }
         $event_date = NULL;
+        $precision_date = NULL;
         if ($request->input('event_date')) {
             $event_date = Carbon::parse($request->input('event_date'))->format('Y-m-d');
+            $precision_date = $request->input('precision_date');
         }
         $event = Event::where('id', $id)->update([ 
                 //'owner_id' => Auth::user()->id,  
                 'category_id' => (int)$request->input('category_id'),
                 'event_name' => $request->input('event_name'),
                 'event_date' => $event_date,
+                'precision_date' => $precision_date,
                 //'event_date' => $request->input('event_date'),
                 'location_id' => $location_id,
                 'description' => $request->input('description')

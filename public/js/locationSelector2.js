@@ -20,18 +20,7 @@ window.LocationSelector = (function () {
             handleLocationChange(this.value, localSelect, allLocationOptions);
             showLocal(localContainer);
         });
-
-        //user can choose to attach vale to an existing Event insted to create new one.
-        const existingEventBtn = document.querySelector(selectorPrefix + "#existingEventBtn");
-        existingEventBtn.addEventListener('click', () => {
-            if (!confirm(`"Event". You ading a new Event and ya'll add the following persons to that new existing event.`)) return;
-            const type = existingEventBtn.getAttribute('data-mode');
-            //const type = existingEventBtn.dataset.mode;
-            //const type = 'data-event-main';
-            const urlRoute = BASE_URL + "/exist-event-input";   //BASE_URL declared<script> const BASE_URL = "{{ url('/') }}"; </script>, just before.
-            //const filterRoute = "{{ route('vale.event-input') }}";    //doesn't work. Work in locationSelector.js
-            get_data_event(urlRoute, null, type)
-        });
+        
     }
 
     function handleRegionChange(region, locationSelect, allOptions) {

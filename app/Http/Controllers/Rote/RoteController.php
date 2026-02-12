@@ -39,6 +39,7 @@ use App\Services\DataService;
 use Illuminate\Support\Facades\View; // Import the View facade
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use App\Http\Requests\StoreValetudinarianRequest;
 
 class RoteController extends Controller
 {
@@ -286,12 +287,13 @@ Log::info("-Rote (Non Ajax-index) Transaction completed in {$duration}ms");
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store_val_event(Request $request)   //add-store new record vale and event (input for both at one page)
+    public function store_val_event(StoreValetudinarianRequest $request)   //add-store new record vale and event (input for both at one page)
     {    
 $startTime = microtime(true); 
         //dd($request->all());
-        /************************************************************ Add Valetudinarian */   
-            $request->validate([
+        /************************************************************ Add Valetudinarian */  
+            $validated = $request->validated();
+            /*$request->validate([
                 'first_name' => 'required|string',   //|unique:valetudinarians',
                 'last_name' => 'required|string',
                 'location_id' => 'required',
@@ -310,7 +312,7 @@ $startTime = microtime(true);
                         }
                     },
                 ],
-            ]);
+            ]);*/
 
             //if 'event_name' or 'description' is not filled then we consider that user don't want to add event part and will store just val part.
             if (isset($request->event_id)) {
@@ -318,7 +320,7 @@ $startTime = microtime(true);
             } elseif (($request->input('event_name') != NULL) || ($request->input('description') != NULL)) { 
                 $with_new_event = $request->validate([
                     'category_id' => 'required',
-                    'event_name' => 'required|unique:events',
+                    'event_name' => 'required|unique:events|max:150',
                     'description' => 'required'/*,
                     'location_id2' => [
                         function ($attribute, $value, $fail) use ($request) {
@@ -362,7 +364,7 @@ $startTime = microtime(true);
             if ($request->input('date_of_birth')) {
                 $valetudinarian->date_of_birth = Carbon::parse($request->input('date_of_birth'))->toDateString();
             }
-            $valetudinarian->occupation = $request->input('occupation');
+            $valetudinarian->occupation = strtoupper($request->input('occupation'));
             $valetudinarian->position = $request->input('position');
             $valetudinarian->email = $request->input('email');
             
@@ -490,13 +492,16 @@ $startTime = microtime(true);
                 $location_id = $request->input('location_id2');
             }
             $event_date = NULL;
+            $precision_date = NULL;
             if ($request->input('event_date')) {
                 $event_date = Carbon::parse($request->input('event_date'))->format('Y-m-d');
+                $precision_date = $request->input('precision_date');
             }
             $event = Event::create([                
                 'event_name' => $request->input('event_name'),
                 'owner_id' => auth()->user()->id,
                 'event_date' => $event_date,
+                'precision_date' => $precision_date,
                 'location_id' => $location_id,
                 'description' => $request->input('description'),
                 'category_id' => $category_id
@@ -683,11 +688,12 @@ Log::info("-Rote (Non Ajax-store_val-event) Transaction completed in {$duration}
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreValetudinarianRequest $request)
     {
 $startTime = microtime(true);        
         //$validatedData = $request->validate([
-        $request->validate([
+        $validated = $request->validated();
+        /*$request->validate([
             //'name' => new Uppercase,  // check field for uppercase tostrupper()
             //'first_name'    => ['required', 'string', new UniquePerson()],
             'first_name' => 'required|string',   //|unique:valetudinarians',
@@ -708,7 +714,7 @@ $startTime = microtime(true);
                     }
                 },
             ],
-        ]);
+        ]);*/
 
         $valetudinarian = new Valetudinarian();
         $valetudinarian->first_name = $request->input('first_name');
@@ -791,7 +797,7 @@ $endTime = microtime(true);
 $duration = round(($endTime - $startTime) * 1000, 2);
 Log::info("-Rote (Non Ajax-store) Transaction completed in {$duration}ms");
 
-        return redirect('/create-event-vale-event/'.$valetudinarian->id); //go to EventController-create_event_valeid($id)-'param' => 1
+        return redirect('/create-event-vale-event/'.$valetudinarian->id); //go to EventController-create_event_valeid($id)-'layout'=>'create_vale_event
         //return redirect('/create-event-valeevent/'.$valetudinarian->id);            //call to continue event 
         return redirect('/create');         //new vale input - all way around
 

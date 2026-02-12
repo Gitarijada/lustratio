@@ -11,7 +11,7 @@
             </div>
             <div class="flex-item">
                 <!--form action="{{ url('/crud-event-ajax') }}" method="GET"-->
-                    <input id="search" type="text" name="search" required/>
+                    <input id="search" type="text" name="search"/>
                     <img id="search_img" src="{{ asset('images/search-icon-no-background-hd-260.png') }}" alt="Search" width=3% height=auto />
                     <!--button id="search_btn" type="button">Search</button-->
                 <!--/form-->
@@ -77,7 +77,7 @@
                     <td><div class="col-200-ellipsis-auto">{{ $event->description }}</div></td>
                    
                     <!--td>{-{ Carbon\Carbon::parse($event->event_date)->format('Y-m-d') }}</td-->
-                    <td><div class="col-w70-auto">@if ($event->event_date != NULL){{ Carbon\Carbon::parse($event->event_date)->format('M Y') }}@endif</div></td> 
+                    <td><div class="col-w70-auto">@if ($event->event_date != NULL){{ Carbon\Carbon::parse($event->event_date)->format($event->precision_date == 'Y' ? 'Y' : 'M Y') }}@endif</div></td> 
                     <!--td>{-{ strtok($event->event_date, '-') }}</td-->
                     <td>{{ $event->location_name }}</td>
                     <!--LUtd>{--{ $event->group_name }}</td-->

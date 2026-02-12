@@ -10,6 +10,9 @@
         </main>
     </div>
 
+    <script src="{{ asset('js/variousMiscellaneous.js') }}"></script>
+    @stack('scripts')
+
 </body>
     @include("layouts.footer")
 </html>

@@ -274,34 +274,51 @@ class ValeEventController extends Controller
     }
 
     public function store(Request $request)
-    {
+    {   
         $request->validate([
             'vale_selected' => 'required',
             'event_id' => 'required',       // |integer|min:1 not nessesary, it will be always int
         ]);
 
         $event_id = $request->input('event_id');
-        //LU$group_ID = $request->input('group_id');
          
-        $selected_vale_ids = $request->get('vale_selected');
+        // 1. Get the IDs of the selected valetudinarians
+        $selected_vale_ids = $request->input('vale_selected', []);
+        //$selected_vale_ids = $request->get('vale_selected');  if get('vale_selected') and no checkboxes are selected, $selected_vale_ids will be null. And with foreach(null as $id), Laravel throw an error: “Invalid argument supplied for foreach()”.
+
     
         foreach($selected_vale_ids as $item_id)
         {
-            $existingRecord = ValeEvent::where('event_id', $event_id)
+            //No need for it. Existed values are disabled within view when event is choosen.
+            /*$existingRecord = ValeEvent::where('event_id', $event_id)
                                ->where('valetudinarian_id', $item_id)
-                               ->first();
+                               ->first();*
 
             // If a matching record is found, do not insert
             if ($existingRecord) {
                 continue; // This breaks the current loop iteration and moves to the next $valetudinarian_id
+            }*/
+
+            $val_event_data = [
+                'event_id' => $event_id,
+                'valetudinarian_id' => $item_id,
+                'owner_id' => auth()->user()->id,
+            ];
+
+            if ($request->filled("vev_description.$item_id")) {
+                $val_event_data['vev_description'] = $request->input("vev_description.$item_id");
             }
-            
-            $vale_events = ValeEvent::create([   //you can use $equ_events = EquEvent::make([ insted but then you have to use $car->save(); before return redi...
+
+            ValeEvent::create($val_event_data);
+            //$vale_events = ValeEvent::create($val_event_data);
+
+            /*$vale_events = ValeEvent::create([   //you can use $equ_events = EquEvent::make([ insted but then you have to use $car->save(); before return redi...
                 'event_id' => $event_id,
                 'valetudinarian_id' => $item_id  //$request->get('equ_selected');
-            ]);
+            ]);*/
         }
 
+        //return redirect()->back()->with('success', 'Data saved successfully!');
         return redirect('/show-valeevent/'.$event_id);         //came to new only Event input --- and then Vales attached to that Event - all way around
         //LUreturn redirect('/create-crew/'.$equ_events->event_id);       //call crew-event input
 
@@ -320,12 +337,15 @@ class ValeEventController extends Controller
         $location = Location::find($event->location_id);
         if ($event->event_date != NULL) $event->event_date = Carbon::parse($event->event_date)->format('Y-m-d');
 
-        $valetudinarians = DB::select("SELECT a.*, b.name as location_name, c.name as party_name FROM valetudinarians a 
+        $rawValetudinarians = DB::select("SELECT a.*, b.name as location_name, c.name as party_name, d.vev_description FROM valetudinarians a 
             LEFT JOIN locations b ON a.location_id = b.id
             LEFT JOIN parties c ON a.party_id = c.id
             LEFT JOIN vale_events d ON (d.valetudinarian_id = a.id) 
             WHERE d.event_id = $id
             ");
+
+        // Convert generic objects into Valetudinarian Models
+        $valetudinarians = \App\Models\Valetudinarian::hydrate($rawValetudinarians);
         
         $images = DB::table('images_events')->where('event_id', '=', $id)->get();
         //$parties = Party::all();
@@ -358,9 +378,28 @@ class ValeEventController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        
+        if($request->ajax()) { 
+            $vale_event = ValeEvent::where('valetudinarian_id', $request->valetudinarian_id)
+                ->where('event_id', $request->event_id)
+                ->first();
+
+            if ($vale_event) {
+
+                $incoming_desc = str_replace(["\r\n", "\r"], "\n", trim(html_entity_decode($request->vev_description)));
+                $stored_desc = str_replace(["\r\n", "\r"], "\n", trim(html_entity_decode($vale_event->vev_description)));
+
+                // Use != for safer comparison with nulls/empty strings
+                if ($stored_desc !== $incoming_desc) {
+                    $vale_event->update(['vev_description' => $incoming_desc]);
+
+                    return response()->json(['success' => true, 'data' => $vale_event]);
+                }
+            }
+            return response()->json(['success' => false, 'message' => 'No change or record not found or they are the same']);
+        }
+
     }
 
     /**

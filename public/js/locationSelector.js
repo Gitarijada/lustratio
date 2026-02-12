@@ -20,18 +20,6 @@ window.LocationSelector = (function () {
             handleLocationChange(this.value, localSelect, allLocationOptions);
             showLocal(localContainer);
         });
-
-        //user can choose to attach vale to an existing Event insted to create new one.
-        const existingEventBtn = document.querySelector(selectorPrefix + "#existingEventBtn");
-        existingEventBtn.addEventListener('click', () => {
-            if (!confirm(`"Event". You ading a new Event and ya'll add the following persons to that new existing event.`)) return;
-            const type = existingEventBtn.getAttribute('data-mode');
-            //const type = existingEventBtn.dataset.mode;
-            //const type = 'data-event-main';
-            
-            const filterRoute = "{{ route('vale.event-input') }}";
-            get_data_event(filterRoute, null, type)
-        });
     }
 
     function handleRegionChange(region, locationSelect, allOptions) {

@@ -5,7 +5,7 @@
         data-help-text="This box represents the first category. It may contain photos, files, or text data associated with section one.">
         <div class="category-container-button">
             <label>KATEGORIJA <span class="mandatory-star-label">*</span></label>
-            @if($layout == 'make_famous' || $layout === 'create_vale_event')
+            @if($layout === 'make_famous' || $layout === 'create_vale_event' || $layout === 'create/att_vale_event')
                 <a id="existingEventBtn" data-mode="data-event-main" class="btn btn-sm btn-outline-primary toolbar-btn">Choose Among Existing Events</a>
             @elseif($layout === 'choose')
                 <a id="existingEventBtn" data-mode="data-event-combined" class="btn btn-sm btn-outline-primary toolbar-btn">New Event</a>
@@ -47,10 +47,10 @@
         @endif 
     </div>
     <div class="mb-3">
-        @if($layout != 'choose')<label>Lokacija <span class="mandatory-star-label">* ako je lokacija dogadjaja na vise teritorija ne unosi se ili unesi "SRBIJA"</span></label>
+        @if($layout != 'add' && $layout != 'choose')<label>Lokacija <span class="mandatory-star-label">&nbsp;&nbsp;ako je lokacija dogadjaja na vise teritorija ne unosi se ili unesi "SRBIJA"</span></label>
         @else<label>Lokacija <span class="mandatory-star-label">*</span></label>
         @endif
-            @if($layout == 'make_famous' || $layout == 'create_vale_event' || $layout == 'choose')
+            @if($layout == 'make_famous' || $layout == 'create_vale_event' || $layout == 'choose')  {{-- where  gonna appear as a second location --}}
                     <!--@-include("location_list2")-->
                 @include("location_list-template2")
             @else
@@ -61,5 +61,9 @@
                 
 </div>
 </div>
-                        
- 
+
+{{--@push('scripts')
+<script>
+    // WAS for "#existingEventBtn"
+</script>
+@endpush--}}

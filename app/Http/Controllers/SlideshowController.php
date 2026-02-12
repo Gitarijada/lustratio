@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 use App\Models\ImageGuess;
+use App\Models\Image;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
@@ -38,8 +39,21 @@ class SlideshowController extends Controller
             session(['showMainInfoModal' => false]);
         } 
         
-        $files = ImageGuess::whereNull('valetudinarian_id')->select('id', 'image_name', 'description')->get();
-
+        $limit = config('constants.PHOTO_LIMIT');
+        $filesGuess = ImageGuess::whereNull('valetudinarian_id')->select('id', 'image_name', 'description')->orderBy('id', 'DESC')->limit($limit)->get();
+        /*$filesVale = Image::where('image_name', 'NOT LIKE', '%-%')
+            //->where('image_name', 'REGEXP', '^[0-9]') // Starts with a number
+            ->select('id', 'valetudinarian_id', 'image_name')
+            ->get();*/
+        $filesVale = Image::where('image_name', 'NOT LIKE', '%-%')
+            //->where('image_name', 'REGEXP', '^[0-9]') // Starts with a number
+            ->with(['valetudinarian' => function($query) {
+                $query->select('id', 'first_name', 'last_name');
+            }])
+            ->select('id', 'valetudinarian_id', 'image_name')
+            ->orderBy('id', 'DESC')
+            ->limit($limit)
+            ->get();
         //************non & ajax call*****************************************************************
         $regions = Location::distinct()->get(['region']);
         if ($request->region) {
@@ -52,7 +66,7 @@ class SlideshowController extends Controller
         $parties = Party::all();
 
         $paginated = true;
-        $paginatedData = $this->dataService->getPaginatedData(NULL, $paginated, 'valetudinarians', $request, 'a.id');
+        $paginatedData = $this->dataService->getPaginatedData(NULL, $paginated, 'valetudinarians', $request, 'a.id', 'DESC');
         $paginatedData = $this->dataService->getImages($paginatedData, 'valetudinarian_id');
 
         $paginatedData->setPath('/lustratio/public/equ');
@@ -107,7 +121,8 @@ class SlideshowController extends Controller
             }
 
         } else {
-            return view('main_vale',['photos' => $files, 
+            return view('main_vale',['photosGuess' => $filesGuess, 
+                                    'photosVale' => $filesVale,
                                     'regions'=> $regions,
                                     'cities' => $cities,
                                     //'locations'=> $locations,
@@ -117,30 +132,30 @@ class SlideshowController extends Controller
                                     'layout'=> 'index']);
             //************non ajax call End*************************************************************
         }
-        //return view('main_slide2x', ['photos' => $files]);
+        //return view('main_slide2x', ['photos' => $filesGuess]);
     }
 
     /*public function modaltest2($xyz = '')
     {
         //$path = public_path('storage/guess_images');   //C:\xampp\htdocs\lustratio\public\storage\vale_images
-        $files = [];
+        $filesGuess = [];
 
         if ($xyz == '') {
-            $files = ImageGuess::whereNull('valetudinarian_id')->pluck('id', 'image_name')->toArray();
+            $filesGuess = ImageGuess::whereNull('valetudinarian_id')->pluck('id', 'image_name')->toArray();
         } else {
             $images = ImageGuess::whereNull('valetudinarian_id')->orderBy($xyz, 'desc')->get();
-            $files = $images->pluck('id', 'image_name')->toArray();
+            $filesGuess = $images->pluck('id', 'image_name')->toArray();
         }
 
-        return view('modaltest2', ['photos' => $files]);
+        return view('modaltest2', ['photos' => $filesGuess]);
     }*/
 
     /*public function index($index = 0)
     {
         $path = public_path('storage/guess_images');
-        $files = File::files($path);
+        $filesGuess = File::filesGuess($path);
 
-        $photos = collect($files)->map(fn($f) => 'storage/guess_images/' . $f->getFilename())->values();
+        $photos = collect($filesGuess)->map(fn($f) => 'storage/guess_images/' . $f->getFilename())->values();
 
         if ($photos->isEmpty()) {
             return view('photo2', ['photo' => null, 'prev' => null, 'next' => null]);
@@ -158,25 +173,25 @@ class SlideshowController extends Controller
 
  
 /*$path = public_path('storage/folder_images');
-$files = [];
+$filesGuess = [];
 
 if (File::exists($path)) {
-$files = collect(File::files($path))
+$filesGuess = collect(File::filesGuess($path))
 ->map(fn($f) => $f->getFilename())
 ->values()
 ->all();
 }
 
-// $files is an array of filenames (e.g. ['img1.jpg', 'pic.png'])
-return view('photo', ['photos' => $files]);
+// $filesGuess is an array of filenames (e.g. ['img1.jpg', 'pic.png'])
+return view('photo', ['photos' => $filesGuess]);
 */
     /*public function list_all()
     {
         $path = public_path('storage/guess_images');   //C:\xampp\htdocs\lustratio\public\storage\vale_images
-        $files = File::files($path);
+        $filesGuess = File::filesGuess($path);
 
         // Extract file names (not full paths) -- from folder
-        $photos = collect($files)->map(function ($file) {
+        $photos = collect($filesGuess)->map(function ($file) {
             return 'storage/guess_images/' . $file->getFilename();
         });
         
@@ -186,29 +201,29 @@ return view('photo', ['photos' => $files]);
     public function list_all2($sort_by = '')
     {
         //$path = public_path('storage/guess_images');   //C:\xampp\htdocs\lustratio\public\storage\vale_images
-        //$files = [];
+        //$filesGuess = [];
 
         if ($sort_by == '') {
-            //$files = ImageGuess::whereNull('valetudinarian_id')->pluck('id', 'image_name', 'description')->toArray();
-            $files = ImageGuess::whereNull('valetudinarian_id')->select('id', 'image_name', 'description')->get();
+            //$filesGuess = ImageGuess::whereNull('valetudinarian_id')->pluck('id', 'image_name', 'description')->toArray();
+            $filesGuess = ImageGuess::whereNull('valetudinarian_id')->select('id', 'image_name', 'description')->get();
         } else {
             //$images = ImageGuess::whereNull('valetudinarian_id')->orderBy($sort_by, 'desc')->get();
             //$files = $images->pluck('id', 'image_name', 'description')->toArray();
-            $files = ImageGuess::whereNull('valetudinarian_id')->select('id', 'image_name', 'description')->orderBy($sort_by, 'desc')->get();
+            $filesGuess = ImageGuess::whereNull('valetudinarian_id')->select('id', 'image_name', 'description')->orderBy($sort_by, 'desc')->get();
         }
 
-        //if (is_array($files)) {
+        //if (is_array($filesGuess)) {
             /*if (!File::exists($path)) {
-                $files = collect(File::files($path))
+                $filesGuess = collect(File::filesGuess($path))
                 ->map(fn($f) => $f->getFilename())
                 ->values()
                 ->all();
             }*/
 
-            //return view('slideshow2', ['photos' => $files]);
+            //return view('slideshow2', ['photos' => $filesGuess]);
         //}
         //return view('slideshow2', compact('images'));
-        return view('slideshow2', ['photos' => $files]);
+        return view('slideshow2', ['photos' => $filesGuess]);
     }
 
     public function uploadGuessImage()

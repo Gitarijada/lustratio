@@ -1,12 +1,11 @@
 @extends('layouts.apppage')
 
 @section('content')   
-
     <div class="row header-container justify-content-center">
-        <div class="header">
+        <div id="event_hx" class="header">
             <h2>EVENTS</h2>
         </div>
-        <!-- dd(Auth::user()) }}--> 
+        <!--{-{ dd(Auth::user()) }}--> 
     </div>
 
     @if($layout == 'index')
@@ -17,15 +16,17 @@
                 </section>
             </div>
         </div>
-    @elseif($layout == 'create')
+    @elseif($layout == 'create' || $layout == 'create/att_vale_event')
         <div class="container-fluid mt-4">
+            <form action="{{ url('/store-event') }}" method="post" enctype="multipart/form-data" onsubmit="return event_confirmation()">   <!--if more type of data like files->"multipart/form-data"-->
+                    @csrf
             <div class="row">
                 <section class="col-md-8">
-                    @if($param == 0) 
+                    @if($layout == 'create') 
                         @include("eventslist")
-                    @elseif($param == 1)
-                        <!--From ValetrudianController->Save - EventController->create_event_valeid($id)-'param' => 1 -->
-                        @include("valelist_check")
+                    @elseif($layout == 'create/att_vale_event')
+                        <!--From ValetrudianController->Save - EventController->create_event_valeid($id)-->
+                        @include("valelist_check")  {{-- ONLY HERE IS USED SO FARE, TRY @include("valetudinarianslist_check") --}}
                     @endif
                 </section>
                 <section class="col-md-4">
@@ -38,14 +39,12 @@
                 
                 <div class="card-body">
                     <h5 class="card-title">Enter the info of the new event</h5>
-                    
-                    <form action="{{ url('/store-event') }}" method="post" enctype="multipart/form-data">   <!--if more type of data like files->"multipart/form-data"-->
-                        @csrf
                         
-                        @if($param == 1)
-                            @foreach($valetudinarians as $item)
+                        @if($layout == 'create/att_vale_event')
+                            <input id="valetudinarian_id" hidden name="valetudinarian_id" value={{ $valetudinarian->id }}>
+                            {{--@foreach($valetudinarians as $item)
                                 <input id="valetudinarian_id" hidden name="valetudinarian_id" value={{ $item->id }}>
-                            @endforeach
+                            @endforeach--}}
                         @endif
 
                         @include("event_input-main")
@@ -57,12 +56,11 @@
                         <a href="{{ url('list-event') }}" class="btn btn-warning">Cancel</a>
                         <div><span class="mandatory-star-label">* denotes mandatory fields</span></div>
 
-                    </form>
-
                 </div>
                 </div>
                 </section>
             </div>
+            </form>
         </div>
     @elseif($layout == 'show')
         <div class="container-fluid mt-4">
@@ -168,6 +166,33 @@
     </script>
 @endif
 <!-- ************************************************************* Info Modal End *** -->
+<script>
+//********************************************************************** Event Confirmation *****
+function event_confirmation() {
+    const existingEventBtn = document.querySelector("#existingEventBtn");
+    if (existingEventBtn) {
+        const type = existingEventBtn.getAttribute('data-mode');
+        if (type == 'data-event-combined') {
+            const eventID = $('#ev_id').val();
+            if (eventID == null) {
+                alert('You must choose an Event !!!'); 
+                return false; 
+            }
+        }
+    } else {
+        console.warn("Element '#existingEventBtn' not found on this page.");
+    }
+    return true; 
+}
+</script>
 
 @endsection   
 
+@push('scripts')
+    <script src="{{ asset('js/locationSelector2.js') }}"></script>  <!-- locationSelector2.js, second one, beware, there is locationSelector.js-not used so fare -->
+    <script src="{{ asset('js/selection-event.js') }}"></script>
+    <script src="{{ asset('js/existingEventOnChangeSelector.js') }}"></script>
+    <script src="{{ asset('js/choose-newSlector.js') }}"></script>
+@endpush
+
+@stack('rest-scripts') <!-- progress-bar This is where your JS will be injected -->

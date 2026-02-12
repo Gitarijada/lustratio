@@ -33,6 +33,7 @@ use App\Models\PageView;
 use App\Rules\UniquePerson;
 
 use App\Services\DataService;
+use App\Http\Requests\StoreValetudinarianRequest;
 
 use Illuminate\Support\Facades\View; // Import the View facade
 use Illuminate\Support\Facades\Validator;
@@ -246,7 +247,8 @@ class ValetudinarianController extends Controller
                 break;
                 case 'data-event-rest':
                     $item_selected = Event::find($request->event_ID);
-                    $layout = 'show';       //when user choose an particular Event (get Event's Data) in "Choose Among Existing Events"
+                    $layout = $request->layout; //default $layout = 'show';
+                    //$layout = 'show_&vev_desc';       //when user choose an particular Event (get Event's Data) in "Choose Among Existing Events"
                     $html = view('event_input-rest', compact('item_selected', 'layout'))->render();
                     // Return as JSON (so you can access it in AJAX success)
                     return response()->json(['html' => $html, 'item_selected' => $item_selected]);
@@ -254,7 +256,8 @@ class ValetudinarianController extends Controller
                 break;
                 case 'data-event-combined':
                     $categories = Category::all();
-                    $layout = 'create_vale_event';      //when user choose "New Event"
+                    //$layout = 'create_vale_event' or 'create/att_vale_event';      //when user choose "New Event"
+                    $layout = $request->layout;
                     $html_main = view('event_input-main', compact('categories', 'regions', 'locations', 'layout'))->render();
                     $html_rest = view('event_input-rest', compact('layout'))->render();
                     return response()->json([
@@ -271,15 +274,17 @@ class ValetudinarianController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store_val_event(Request $request)   //add-store new record vale and event (input for both at one page)
+    public function store_val_event(StoreValetudinarianRequest $request)   //add-store new record vale and event (input for both at one page)
     {     
         //dd($request->all());
         /************************************************************ Add Valetudinarian */   
-            $request->validate([
+            $validated = $request->validated();
+            /*$request->validate([
                 'first_name' => 'required|string',   //|unique:valetudinarians',
                 'last_name' => 'required|string',
                 'location_id' => 'required',
                 'party_id' => 'required',
+                //'val_description' => 'nullable|string|max:700',
                 //'date_of_birth' => [new UniquePerson],
                 // custom rule:
                 'date_of_birth' => [
@@ -294,7 +299,7 @@ class ValetudinarianController extends Controller
                         }
                     },
                 ],
-            ]);
+            ]);*/
 
             //if 'event_name' or 'description' is not filled then we consider that user don't want to add event part and will store just val part.
             if (isset($request->event_id)) {
@@ -302,7 +307,7 @@ class ValetudinarianController extends Controller
             } elseif (($request->input('event_name') != NULL) || ($request->input('description') != NULL)) { 
                 $with_new_event = $request->validate([
                     'category_id' => 'required',
-                    'event_name' => 'required|unique:events',
+                    'event_name' => 'required|unique:events|max:150',
                     'description' => 'required'/*,
                     'location_id2' => [
                         function ($attribute, $value, $fail) use ($request) {
@@ -346,7 +351,7 @@ class ValetudinarianController extends Controller
             if ($request->input('date_of_birth')) {
                 $valetudinarian->date_of_birth = Carbon::parse($request->input('date_of_birth'))->toDateString();
             }
-            $valetudinarian->occupation = $request->input('occupation');
+            $valetudinarian->occupation = strtoupper($request->input('occupation'));
             $valetudinarian->position = $request->input('position');
             $valetudinarian->email = $request->input('email');
             
@@ -474,13 +479,16 @@ class ValetudinarianController extends Controller
                 $location_id = $request->input('location_id2');
             }
             $event_date = NULL;
+            $precision_date = NULL;
             if ($request->input('event_date')) {
                 $event_date = Carbon::parse($request->input('event_date'))->format('Y-m-d');
+                $precision_date = $request->input('precision_date');
             }
             $event = Event::create([                
                 'event_name' => $request->input('event_name'),
                 'owner_id' => auth()->user()->id,
                 'event_date' => $event_date,
+                'precision_date' => $precision_date,
                 'location_id' => $location_id,
                 'description' => $request->input('description'),
                 'category_id' => $category_id
@@ -535,10 +543,19 @@ class ValetudinarianController extends Controller
             if ($valetudinarian->id == NULL) {
                 return redirect('/create-valeevent/'.$event_id);    //Here is continuation for ref tables vale_events
             } else {        //if we doing from start (whole input) from Vale-Event-ValeEvent
-                ValeEvent::create([   //you can use $equ_events = EquEvent::make([ insted but then you have to use $car->save(); before return redi...
+                $val_event_data = [
                     'event_id' => $event_id,
-                    'valetudinarian_id' => $valetudinarian->id
-                ]);
+                    'valetudinarian_id' => $valetudinarian->id,
+                    'owner_id' => auth()->user()->id,
+                ];
+
+                if ($request->filled('vev_description')) {
+                    $val_event_data['vev_description'] = $request->input('vev_description');
+                }
+
+                ValeEvent::create($val_event_data);
+
+                //you can use $equ_events = EquEvent::make([ insted but then you have to use $car->save(); before return redi...
             }
         }
         /************************************************************ End Add Event */
@@ -663,16 +680,18 @@ class ValetudinarianController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
-    {        
+    public function store(StoreValetudinarianRequest $request)
+    {     
+        $validated = $request->validated();   
         //$validatedData = $request->validate([
-        $request->validate([
+        /*$request->validate([
             //'name' => new Uppercase,  // check field for uppercase tostrupper()
             //'first_name'    => ['required', 'string', new UniquePerson()],
             'first_name' => 'required|string',   //|unique:valetudinarians',
             'last_name' => 'required|string',
             'location_id' => 'required',
             'party_id' => 'required',
+            //'val_description' => 'nullable|string|max:700',
             //'date_of_birth' => [new UniquePerson],
             // custom rule:
             'date_of_birth' => [
@@ -687,31 +706,7 @@ class ValetudinarianController extends Controller
                     }
                 },
             ],
-        ]);
-
-        /*$validator = Validator::make($request->all(), [
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
-            'date_of_birth' => 'required|date',
-            'location_id' => 'required',
-            'party_id' => 'required',
-        ]);
-
-        $validator->after(function ($validator) use ($request) {
-            $exists = Valetudinarian::where('first_name', $request->first_name)
-                ->where('last_name', $request->last_name)
-                ->where('date_of_birth', $request->date_of_birth)
-                ->exists();
-
-            if ($exists) {
-                $validator->errors()->add(
-                    'first_name',
-                    'The combination of first name, last name, and date of birth already exists.'
-                );
-            }
-        });
-
-        $validator->validate();*/
+        ]);*/
 
         $valetudinarian = new Valetudinarian();
         $valetudinarian->first_name = $request->input('first_name');
@@ -800,9 +795,9 @@ class ValetudinarianController extends Controller
             'image_path' => $request->input('image_path')
         ]);*/
 
-        return redirect('/create-event-vale-event/'.$valetudinarian->id); //go to EventController-create_event_valeid($id)-'param' => 1
+        return redirect('/create-event-vale-event/'.$valetudinarian->id); //go to EventController-create_event_valeid($id)-'layout'=>'create_vale_event
         //return redirect('/create-event-valeevent/'.$valetudinarian->id);            //call to continue event 
-        return redirect('/create');         //new vale input - all way around
+        return redirect('/create');         //go to ValetudinarianController new vale input - all way around
 
     }
 
@@ -822,11 +817,11 @@ class ValetudinarianController extends Controller
             ->join('vale_events', 'events.id', '=', 'vale_events.event_id')
             ->leftjoin('categories', 'events.category_id', '=', 'categories.id')
             ->leftjoin('locations', 'events.location_id', '=', 'locations.id')
-            ->select('events.*', 'categories.category_name', 'locations.zip', 'locations.name')
+            ->select('events.*', 'categories.category_name', 'locations.zip', 'locations.name', 'vale_events.vev_description')
             ->get();
 
         // Convert generic objects into Valetudinarian Models
-        $events = \App\Models\Valetudinarian::hydrate($rawEvents->toArray());
+        $events = \App\Models\Event::hydrate($rawEvents->toArray());
 
         //$images = Image::find($id);
         $images = DB::table('images')->where('valetudinarian_id', '=', $id)->get();
@@ -910,11 +905,14 @@ class ValetudinarianController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'first_name'    => ['required', 'string', new UniquePerson($id)],
+            'first_name'    => ['required', 'string', 'max:35', new UniquePerson($id)],
             //'first_name' => 'required',
-            'last_name' => 'required|string',
+            'last_name' => 'required|string|max:35',
+            'sobriquet' => 'max:35',
             'location_id' => 'required',
             'party_id' => 'required',
+            'phone' => 'max:20',
+            //'val_description' => 'nullable|string|max:700',
         ]);
 
         $valetudinarian = Valetudinarian::find($id);

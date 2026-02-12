@@ -37,7 +37,7 @@
             gap: 16px;
             padding: 24px;
         }
-        .thumb {
+        .thumb, .thumb-static {
             position: relative;
             overflow: hidden;
             border-radius: 10px;
@@ -45,7 +45,7 @@
             cursor: pointer;
             background: #fff;
         }
-        .thumb img {
+        .thumb img, .thumb-static img {
             width: 100%;
             height: 60px;
             object-fit: cover;
@@ -57,6 +57,31 @@
             color: #444;
             text-align: center;
             background: #fff;
+        }
+
+        /* Container must be relative for the text positioning */
+        .thumb-static {
+            position: relative;
+            display: inline-block; /* or block depending on your layout */
+        }
+
+        /* Hide text by default */
+        .thumb-static .hover-text {
+            display: none;
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            background: rgba(0, 0, 0, 0.7); /* black with transparency */
+            color: #fff;
+            padding: 2px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            pointer-events: none; /* allows clicking the link "through" the text */
+        }
+
+        /* Show text when hovering the container */
+        .thumb-static:hover .hover-text {
+            display: block;
         }
 
         /* Modal custom toolbar styles */
@@ -78,16 +103,37 @@
                 <h4><br>Ucinimo ih Poznatim Galerija</h4>
             </div>
                                                     <!-- dd(Auth::user()) }}--> 
-                                                    <!--{-{ dd($photos) }} -->
+                                                    <!--{-{ dd($photosGuess) }} -->
             <div class="gallery" id="gallery">
-                <!--@ forelse($photos as $image_name => $id)-->
-                @forelse($photos as $photo)
+                <!--@ forelse($photosGuess as $image_name => $id)-->
+                @forelse($photosGuess as $photo)
                     <div class="thumb" data-filename="{{ $photo->image_name }}" data-id="{{ $photo->id }}" data-help-text="{{ $photo->description }}">
                         <img src="{{ asset('storage/guess_images/' . $photo->image_name) }}" alt="{{ $photo->id }}">
                         <!--div class="name">{-{ $p }}</div-->
                     </div>
                 @empty
-                    <p class="text-center text-muted">No photos found in the folder.</p>
+                    <p class="text-center text-muted">No photos found.</p>
+                @endforelse
+            </div>
+        </div>
+        <div class="justify-content-center">
+            <div class="header text-center">
+                <h4><br>Nasi Znami Ćaci Heroji Galerija</h4>
+            </div>
+                                                    <!-- dd(Auth::user()) }}--> 
+                                                    <!--{-{ dd($photosVale) }} -->
+            <div class="gallery" id="gallery">
+                <!--@ forelse($photosVale as $image_name => $id)-->
+                @forelse($photosVale as $photo)
+                    <div class="thumb-static">
+                        <a href="{{ url('/show/'.$photo->valetudinarian_id) }}">
+                            <img src="{{ asset('storage/vale_images/' . $photo->image_name) }}" alt="{{ $photo->id }}" title="{{ $photo->image_name }}">
+                            <span class="hover-text">{{ $photo->valetudinarian->first_name ?? 'Unknown' }} 
+                                                    {{ $photo->valetudinarian->last_name ?? '' }}</span>
+                        </a>
+                    </div>
+                @empty
+                    <p class="text-center text-muted">No photos found.</p>
                 @endforelse
             </div>
         </div>
